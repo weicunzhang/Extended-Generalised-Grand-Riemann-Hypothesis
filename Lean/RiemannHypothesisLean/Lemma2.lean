@@ -1,6 +1,7 @@
 module
 
 import Mathlib
+import Mathlib.Analysis.Complex.Polynomial.Basic
 
 /-!
 # Lemma 2: divisibility for an absolutely convergent infinite product
@@ -51,7 +52,7 @@ theorem lemma2_core
   have hne : ∀ n, (g n).aeval α ≠ 0 := by
     intro n hn
     apply hnone
-    exact ⟨n, (hm.dvd_iff_aeval_eq_zero hm_root).2 hn⟩
+    exact ⟨n, (hm.dvd_iff_aeval_eq_zero hm_root).1 hn⟩
   have hprod_ne : ∏' n, (g n).aeval α ≠ 0 := by
     simpa using
       (tprod_one_add_ne_zero_of_summable
