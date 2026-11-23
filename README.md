@@ -46,8 +46,14 @@ Weicun Zhang (2026). *On the Extended, Generalized, and Grand Riemann Hypotheses
 
 ## Lean 4 formalization
 
-A Lean 4 + Mathlib formalization project is being developed in the [Lean directory](./Lean/README.md).
+**Lemma 1, Lemma 2, and Theorem 1 have been formalized and successfully verified using Lean 4 and Mathlib.** The project build and axiom audit passed in [GitHub Actions Run #48 on the `main` branch](https://github.com/weicunzhang/Extended-Generalised-Grand-Riemann-Hypothesis/actions/runs/45119141696).
 
-The first target is **Lemma 1** from the preliminary lemmas. Its finite-product statement is represented using a finite Lean list. The formalization also proves the slightly stronger list version, without needing the paper's explicit lower bound n ≥ 2.
+The formalized results are:
 
-The project will report a theorem as machine-verified only after the corresponding GitHub Actions build succeeds. Lemma 2 and Theorem 1 are not yet formalized.
+- **Lemma 1:** An irreducible polynomial over `ℝ` that divides a finite product divides at least one of its factors.
+- **Lemma 2:** Under the formalized entire-quotient, pointwise product-representation, and absolute-convergence hypotheses, divisibility by an irreducible polynomial implies that it divides at least one factor of the infinite product.
+- **Theorem 1:** Under the formalized symmetry, product-representation, absolute-convergence, and zero-quadruple-uniqueness hypotheses, every quadratic factor has center `k/2`; the absolute zero heights are pairwise distinct; and, under the stated weighted summability condition, they admit a strictly increasing bijective reindexing.
+
+The Lean source files are available in the [Lean project](./Lean/README.md): [Lemma 1](./Lean/RiemannHypothesisLean/Lemma1.lean), [Lemma 2](./Lean/RiemannHypothesisLean/Lemma2.lean), and [Theorem 1](./Lean/RiemannHypothesisLean/Theorem1.lean). The [Lean README](./Lean/README.md) describes the formal statements, hypotheses, and proof scope in more detail.
+
+These machine-checked results verify the formalized statements under their explicitly encoded hypotheses. They do not, by themselves, establish the manuscript's broader applications or prove ERH, GRH, the Grand Riemann Hypothesis, or the exclusion of Landau–Siegel zeros.
