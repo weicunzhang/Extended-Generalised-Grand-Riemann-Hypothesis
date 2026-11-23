@@ -1,7 +1,7 @@
 module
 
-import Mathlib
-import RiemannHypothesisLean.Lemma2
+public import Mathlib
+public import RiemannHypothesisLean.Lemma2
 
 public section
 
