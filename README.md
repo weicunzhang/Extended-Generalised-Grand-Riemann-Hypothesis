@@ -42,3 +42,12 @@ For the latest manuscript text and version history, use the [official Preprints.
 ## Citation
 
 Weicun Zhang (2026). *On the Extended, Generalized, and Grand Riemann Hypotheses: A Unified Approach via the Divisibility Property of Entire Functions*. Preprints.org, Version 23. https://doi.org/10.20944/preprints202506.0481.v23
+
+
+## Lean 4 formalization
+
+A Lean 4 + Mathlib formalization project is being developed in the [Lean directory](./Lean/README.md).
+
+The first target is **Lemma 1** from the preliminary lemmas. Its finite-product statement is represented using a finite Lean list. The formalization also proves the slightly stronger list version, without needing the paper's explicit lower bound n ≥ 2.
+
+The project will report a theorem as machine-verified only after the corresponding GitHub Actions build succeeds. Lemma 2 and Theorem 1 are not yet formalized.
