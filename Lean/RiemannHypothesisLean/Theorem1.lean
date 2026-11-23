@@ -1,6 +1,7 @@
 module
 
 public import Mathlib
+public import Mathlib.Algebra.Polynomial.SpecificDegree
 public import RiemannHypothesisLean.Lemma2
 
 public section
@@ -30,7 +31,7 @@ increasing enumeration of these values is a reindexing step.
 
 namespace RiemannHypothesisLean
 
-/-- Monic real quadratic with roots a ± I*b. -/
+/-- Normalized real quadratic factor with roots a ± I*b. -/
 noncomputable def quadraticFactor (a b : ℝ) : Polynomial ℝ :=
   1 + Polynomial.C ((b ^ 2)⁻¹) * (Polynomial.X - Polynomial.C a) ^ 2
 
@@ -39,6 +40,50 @@ lemma quadraticFactor_aeval_root (a b : ℝ) (hb : b ≠ 0) :
     (quadraticFactor a b).aeval ((a : ℂ) + Complex.I * b) = 0 := by
   simp [quadraticFactor, mul_pow, Complex.I_sq, ← Complex.ofReal_pow,
     Complex.ofReal_inv] <;> field_simp [hb] <;> ring
+
+/-- The normalized quadratic factor has degree two when its height is nonzero. -/
+lemma quadraticFactor_natDegree (a b : ℝ) (hb : b ≠ 0) :
+    (quadraticFactor a b).natDegree = 2 := by
+  have hscale : (b ^ 2)⁻¹ ≠ 0 := inv_ne_zero (pow_ne_zero 2 hb)
+  have hterm :
+      (Polynomial.C ((b ^ 2)⁻¹) *
+        (Polynomial.X - Polynomial.C a) ^ 2).natDegree = 2 := by
+    rw [Polynomial.natDegree_C_mul hscale]
+    simp [Polynomial.natDegree_X_sub_C]
+  change (1 + Polynomial.C ((b ^ 2)⁻¹) *
+    (Polynomial.X - Polynomial.C a) ^ 2).natDegree = 2
+  calc
+    (1 + Polynomial.C ((b ^ 2)⁻¹) *
+        (Polynomial.X - Polynomial.C a) ^ 2).natDegree
+        = (Polynomial.C ((b ^ 2)⁻¹) *
+            (Polynomial.X - Polynomial.C a) ^ 2).natDegree := by
+          simpa only [add_comm] using
+            (Polynomial.natDegree_add_eq_left_of_natDegree_lt
+              (p := Polynomial.C ((b ^ 2)⁻¹) *
+                (Polynomial.X - Polynomial.C a) ^ 2)
+              (q := (1 : Polynomial ℝ))
+              (by rw [hterm]; simp))
+    _ = 2 := hterm
+
+/-- The normalized quadratic factor has no real roots. -/
+lemma quadraticFactor_not_isRoot (a b : ℝ) (hb : b ≠ 0) :
+    ∀ x : ℝ, ¬ (quadraticFactor a b).IsRoot x := by
+  intro x hx
+  change (quadraticFactor a b).eval x = 0 at hx
+  have hEval : 1 + (b ^ 2)⁻¹ * (x - a) ^ 2 = 0 := by
+    simpa [quadraticFactor] using hx
+  have hpos : 0 < (b ^ 2)⁻¹ := inv_pos.mpr (sq_pos_of_ne_zero hb)
+  have hnonneg : 0 ≤ (b ^ 2)⁻¹ * (x - a) ^ 2 :=
+    mul_nonneg (le_of_lt hpos) (sq_nonneg (x - a))
+  linarith
+
+/-- Every normalized quadratic factor with nonzero height is irreducible over ℝ. -/
+lemma quadraticFactor_irreducible (a b : ℝ) (hb : b ≠ 0) :
+    Irreducible (quadraticFactor a b) := by
+  apply Polynomial.irreducible_of_degree_le_three_of_not_isRoot
+  · rw [quadraticFactor_natDegree a b hb]
+    norm_num
+  · exact quadraticFactor_not_isRoot a b hb
 
 /-- If a quadratic factor vanishes at the reflected point
 k - (a + I*b), then its center and squared height satisfy the
@@ -90,7 +135,6 @@ theorem theorem1_centers
     (F : ℂ → ℂ)
     (hβ : ∀ i, β i ≠ 0)
     (hmult : ∀ i, 0 < mult i)
-    (hquad : ∀ i, Irreducible (quadraticFactor (α i) (β i)))
     (hunique : ∀ i l, α i + α l = k → β i ^ 2 = β l ^ 2 → i = l)
     (hsym : ∀ z : ℂ, F z = F ((k : ℂ) - z))
     (hprod : ∀ z : ℂ, HasProd
@@ -122,15 +166,17 @@ theorem theorem1_centers
       (fun l : ℕ => ‖(((quadraticFactor (α l) (β l)).comp
         (Polynomial.C k - Polynomial.X)) ^ mult l).aeval z - 1‖) := by
     simpa [Polynomial.aeval_comp] using habsolute ((k : ℂ) - z)
+  have hqi : Irreducible (quadraticFactor (α i) (β i)) :=
+    quadraticFactor_irreducible (α i) (β i) (hβ i)
   obtain ⟨l, hdiv⟩ := lemma2_core
     (quadraticFactor (α i) (β i))
     (fun l : ℕ => (quadraticFactor (α l) (β l)).comp
       (Polynomial.C k - Polynomial.X) ^ mult l)
-    z (hquad i) hzroot hprodRef hsumRef
+    z hqi hzroot hprodRef hsumRef
   have hpowroot :
       ((quadraticFactor (α l) (β l)).comp
         (Polynomial.C k - Polynomial.X) ^ mult l).aeval z = 0 := by
-    exact ((hquad i).dvd_iff_aeval_eq_zero hzroot).2 hdiv
+    exact (hqi.dvd_iff_aeval_eq_zero hzroot).2 hdiv
   have hpowroot' :
       (((quadraticFactor (α l) (β l)).comp
         (Polynomial.C k - Polynomial.X)).aeval z) ^ mult l = 0 := by
