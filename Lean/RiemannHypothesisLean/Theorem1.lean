@@ -876,4 +876,36 @@ theorem theorem1_representation_is_entire
   rw [hEq]
   exact hprod
 
+
+/-- The original parameter hypotheses in Theorem 1 imply both that the
+represented infinite product is entire and that the zero-center and
+increasing-height conclusions hold. In particular, entire-ness is derived
+from the compact-wise majorant rather than assumed separately. -/
+theorem theorem1_entire_and_full_conclusion_of_parameter_conditions
+    (k : ℝ)
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (F : ℂ → ℂ)
+    (hk : 0 < k)
+    (hα : ∀ n, 0 ≤ α n ∧ α n ≤ k)
+    (hβ : ∀ n, β n ≠ 0)
+    (hmult : ∀ n, 0 < mult n)
+    (hunique : ∀ i l, α i + α l = k → β i ^ 2 = β l ^ 2 → i = l)
+    (hsym : ∀ z : ℂ, F z = F ((k : ℂ) - z))
+    (hrepresentation : ∀ z : ℂ,
+      F z = ∏' n : ℕ, theorem1FactorTerm α β mult n z)
+    (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
+    Differentiable ℂ F ∧
+      (∀ i, α i = k / 2) ∧
+        ∃ σ : ℕ ≃ ℕ, 0 < |β (σ 0)| ∧ StrictMono (fun n => |β (σ n)|) := by
+  have hlocal :=
+    theorem1FactorTerm_locally_uniformly_absolutely_summable
+      k α β mult (le_of_lt hk) hα hsum
+  have hEntire :=
+    theorem1_representation_is_entire α β mult F hrepresentation hlocal
+  have hConclusion :=
+    theorem1_full_conclusion_of_local_absolute_convergence
+      k α β mult F hβ hmult hunique hsym hrepresentation hlocal hsum
+  exact ⟨hEntire, hConclusion⟩
+
 end RiemannHypothesisLean
