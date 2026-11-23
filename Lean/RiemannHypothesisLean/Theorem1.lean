@@ -8,6 +8,8 @@ public import RiemannHypothesisLean.Lemma2
 
 public section
 
+open scoped Topology
+
 /-!
 # Theorem 1: the symmetry forces the quadratic factors onto the center line
 
@@ -318,7 +320,7 @@ theorem theorem1_abs_beta_tendsto_atTop
       Iio_mem_nhds (by positivity)
     exact hzero.eventually hnhds
   obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hsmall
-  refine ⟨N, ?_⟩
+  refine Filter.eventually_atTop.mpr ⟨N, ?_⟩
   intro n hn
   have hβpos : 0 < |β n| := abs_pos.mpr (hβ n)
   have hsq : C ^ 2 < |β n| ^ 2 :=
@@ -327,59 +329,70 @@ theorem theorem1_abs_beta_tendsto_atTop
     nlinarith
   exact hBC.trans hCr
 
-/-- A finite interval of indices, lifted to a type synonym so that
-the order induced by r does not overwrite the usual order on ℕ. -/
-noncomputable def tendstoIccFinsetULift (r : ℕ → ℝ)
-    (hr : Filter.Tendsto r (Filter.atTop : Filter ℕ) (Filter.atTop : Filter ℝ))
-    (a b : ULift ℕ) : Finset (ULift ℕ) := by
-  classical
-  exact ((Finset.range (tendstoBound r hr b.down)).image ULift.up).filter
-    (fun n => r a.down ≤ r n.down ∧ r n.down ≤ r b.down)
+/-- A copy of the natural-number index type, used to equip the indices
+with the order induced by their real heights without changing the usual
+order on ℕ. -/
+@[ext]
+structure HeightIndex where
+  val : ℕ
+  deriving DecidableEq
 
-theorem mem_tendstoIccFinsetULift (r : ℕ → ℝ)
+/-- A finite interval of indices in the height-induced order. -/
+noncomputable def tendstoIccFinsetIndex (r : ℕ → ℝ)
     (hr : Filter.Tendsto r (Filter.atTop : Filter ℕ) (Filter.atTop : Filter ℝ))
-    (a b x : ULift ℕ) :
-    x ∈ tendstoIccFinsetULift r hr a b ↔
-      r a.down ≤ r x.down ∧ r x.down ≤ r b.down := by
+    (a b : HeightIndex) : Finset HeightIndex := by
   classical
-  simp only [tendstoIccFinsetULift, Finset.mem_filter, Finset.mem_image, Finset.mem_range]
+  exact ((Finset.range (tendstoBound r hr b.val)).image HeightIndex.mk).filter
+    (fun n => r a.val ≤ r n.val ∧ r n.val ≤ r b.val)
+
+theorem mem_tendstoIccFinsetIndex (r : ℕ → ℝ)
+    (hr : Filter.Tendsto r (Filter.atTop : Filter ℕ) (Filter.atTop : Filter ℝ))
+    (a b x : HeightIndex) :
+    x ∈ tendstoIccFinsetIndex r hr a b ↔
+      r a.val ≤ r x.val ∧ r x.val ≤ r b.val := by
+  classical
+  simp only [tendstoIccFinsetIndex, Finset.mem_filter, Finset.mem_image, Finset.mem_range]
   constructor
   · rintro ⟨⟨n, hn, hEq⟩, hax, hxb⟩
     cases hEq
     exact ⟨hax, hxb⟩
   · rintro ⟨hax, hxb⟩
-    refine ⟨⟨x.down, ?_, ?_⟩, hax, hxb⟩
+    refine ⟨⟨x.val, ?_, ?_⟩, hax, hxb⟩
     · by_contra hx
-      have hbound : tendstoBound r hr b.down ≤ x.down := Nat.le_of_not_gt hx
-      exact (not_lt_of_ge hxb) (tendstoBound_spec r hr b.down x.down hbound)
+      have hbound : tendstoBound r hr b.val ≤ x.val := Nat.le_of_not_gt hx
+      exact (not_lt_of_ge hxb) (tendstoBound_spec r hr b.val x.val hbound)
     · cases x
       rfl
 
 /-- A sequence of distinct real numbers tending to +∞ can be
 reindexed by a permutation of ℕ so that it is strictly increasing.
 
-We use ULift for the ordered index type, keeping the target ℕ in the
-usual order. Bounded intervals in the induced order are finite; the
-order has a least element and no greatest element. -/
+We use a copy of ℕ with the order induced by r. Its bounded intervals
+are finite, it has a least element and no greatest element, so it is
+order-isomorphic to the usual natural numbers. -/
 theorem exists_strictMono_reindex_of_tendsto_atTop
     (r : ℕ → ℝ) (hinj : Function.Injective r)
     (hr : Filter.Tendsto r (Filter.atTop : Filter ℕ) (Filter.atTop : Filter ℝ)) :
     ∃ σ : ℕ ≃ ℕ, StrictMono (fun n => r (σ n)) := by
   classical
-  let rLift : ULift ℕ → ℝ := fun n => r n.down
-  have hrLiftInj : Function.Injective rLift := by
+  let rIndex : HeightIndex → ℝ := fun n => r n.val
+  have hrIndexInj : Function.Injective rIndex := by
     intro a b hab
-    apply ULift.down_injective
+    apply HeightIndex.ext
     exact hinj hab
-  letI : LinearOrder (ULift ℕ) := LinearOrder.lift' rLift hrLiftInj
-  letI : LE (ULift ℕ) := ⟨fun a b => r a.down ≤ r b.down⟩
-  letI : LT (ULift ℕ) := ⟨fun a b => r a.down < r b.down⟩
-  letI : LocallyFiniteOrder (ULift ℕ) :=
-    LocallyFiniteOrder.ofIcc' (ULift ℕ) (tendstoIccFinsetULift r hr) (by
+  letI : LinearOrder HeightIndex := LinearOrder.lift' rIndex hrIndexInj
+  letI : LE HeightIndex := ⟨fun a b => r a.val ≤ r b.val⟩
+  letI : LT HeightIndex := ⟨fun a b => r a.val < r b.val⟩
+  letI : Preorder HeightIndex := (LinearOrder.lift' rIndex hrIndexInj).toPreorder
+  letI : DecidableLE HeightIndex := fun a b => by
+    change Decidable (r a.val ≤ r b.val)
+    infer_instance
+  letI : LocallyFiniteOrder HeightIndex :=
+    LocallyFiniteOrder.ofIcc' HeightIndex (tendstoIccFinsetIndex r hr) (by
       intro a b x
-      change x ∈ tendstoIccFinsetULift r hr a b ↔
-        r a.down ≤ r x.down ∧ r x.down ≤ r b.down
-      exact mem_tendstoIccFinsetULift r hr a b x)
+      change x ∈ tendstoIccFinsetIndex r hr a b ↔
+        r a.val ≤ r x.val ∧ r x.val ≤ r b.val
+      exact mem_tendstoIccFinsetIndex r hr a b x)
   let N0 : ℕ := tendstoBound r hr 0
   have hN0 : 0 < N0 := by
     by_contra hN0
@@ -388,50 +401,55 @@ theorem exists_strictMono_reindex_of_tendsto_atTop
       simpa [N0, hN0']
     have hcontr : r 0 < r 0 := tendstoBound_spec r hr 0 0 hle
     exact (lt_irrefl (r 0)) hcontr
-  let S : Finset (ULift ℕ) :=
-    ((Finset.range N0).image ULift.up).filter (fun n => r n.down ≤ r 0)
-  have h0S : ULift.up 0 ∈ S := by
-    simp [S, hN0]
-  have hS : S.Nonempty := ⟨ULift.up 0, h0S⟩
-  let b : ULift ℕ := S.min' hS
+  let S : Finset HeightIndex :=
+    ((Finset.range N0).image HeightIndex.mk).filter (fun n => r n.val ≤ r 0)
+  have h0S : HeightIndex.mk 0 ∈ S := by
+    apply Finset.mem_filter.mpr
+    refine ⟨?_, le_rfl⟩
+    apply Finset.mem_image.mpr
+    exact ⟨0, Finset.mem_range.mpr hN0, rfl⟩
+  have hS : S.Nonempty := ⟨HeightIndex.mk 0, h0S⟩
+  let b : HeightIndex := S.min' hS
   have hbS : b ∈ S := Finset.min'_mem S hS
-  have hbr0 : r b.down ≤ r 0 := (Finset.mem_filter.mp hbS).2
-  letI : Bot (ULift ℕ) := ⟨b⟩
-  letI : OrderBot (ULift ℕ) :=
+  have hbr0 : r b.val ≤ r 0 := (Finset.mem_filter.mp hbS).2
+  letI : Bot HeightIndex := ⟨b⟩
+  letI : OrderBot HeightIndex :=
     ⟨fun n => by
-      change r b.down ≤ r n.down
-      by_cases hn : n.down < N0
-      · by_cases hle : r n.down ≤ r 0
+      change r b.val ≤ r n.val
+      by_cases hn : n.val < N0
+      · by_cases hle : r n.val ≤ r 0
         · have hnS : n ∈ S := by
-            simp [S, hn, hle]
+            apply Finset.mem_filter.mpr
+            refine ⟨?_, hle⟩
+            apply Finset.mem_image.mpr
+            exact ⟨n.val, Finset.mem_range.mpr hn, by cases n; rfl⟩
           exact Finset.min'_le S n hnS
         · exact le_of_lt (hbr0.trans_lt (lt_of_not_ge hle))
-      · have h0n : r 0 < r n.down :=
-          tendstoBound_spec r hr 0 n.down (Nat.le_of_not_gt hn)
+      · have h0n : r 0 < r n.val :=
+          tendstoBound_spec r hr 0 n.val (Nat.le_of_not_gt hn)
         exact le_of_lt (hbr0.trans_lt h0n)⟩
-  letI : NoMaxOrder (ULift ℕ) :=
+  letI : NoMaxOrder HeightIndex :=
     ⟨fun n => by
-      have hev : ∀ᶠ m : ℕ in Filter.atTop, r n.down < r m :=
-        hr.eventually (Filter.eventually_gt_atTop (r n.down))
+      have hev : ∀ᶠ m : ℕ in Filter.atTop, r n.val < r m :=
+        hr.eventually (Filter.eventually_gt_atTop (r n.val))
       obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hev
-      refine ⟨ULift.up (N + n.down + 1), ?_⟩
-      change r n.down < r (N + n.down + 1)
+      refine ⟨HeightIndex.mk (N + n.val + 1), ?_⟩
+      change r n.val < r (N + n.val + 1)
       exact hN _ (by omega)⟩
-  letI : SuccOrder (ULift ℕ) :=
-    LinearLocallyFiniteOrder.succOrder (ULift ℕ)
-  letI : PredOrder (ULift ℕ) :=
-    LinearLocallyFiniteOrder.predOrder (ULift ℕ)
-  let e : ULift ℕ ≃o ℕ :=
-    orderIsoNatOfLinearSuccPredArch
+  letI : SuccOrder HeightIndex :=
+    LinearLocallyFiniteOrder.succOrder HeightIndex
+  letI : PredOrder HeightIndex :=
+    LinearLocallyFiniteOrder.predOrder HeightIndex
+  let e : HeightIndex ≃o ℕ := orderIsoNatOfLinearSuccPredArch
   let σ : ℕ ≃ ℕ where
-    toFun n := (e.symm n).down
-    invFun n := e (ULift.up n)
+    toFun n := (e.symm n).val
+    invFun n := e (HeightIndex.mk n)
     left_inv n := by simp
     right_inv n := by simp
   refine ⟨σ, ?_⟩
   intro n m hnm
   have hlt : e.symm n < e.symm m := e.symm.strictMono hnm
-  change r (e.symm n).down < r (e.symm m).down at hlt
+  change r (e.symm n).val < r (e.symm m).val at hlt
   change r (σ n) < r (σ m)
   exact hlt
 
