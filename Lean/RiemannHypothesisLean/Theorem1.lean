@@ -801,7 +801,7 @@ theorem LocallyUniformlyAbsolutelySummable.hasProdLocallyUniformly
     dsimp [deviation]
     exact (hcts n).continuousOn.sub continuousOn_const
   have hprod :=
-    hbound.hasProdUniformlyOn_nat_one_add hK
+    Summable.hasProdUniformlyOn_nat_one_add hK hbound
       (Filter.Eventually.of_forall fun n z hz => hdom n z hz)
       hcts'
   have hfactor : ∀ n z, 1 + deviation n z = f n z := by
