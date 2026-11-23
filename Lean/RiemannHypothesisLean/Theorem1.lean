@@ -8,10 +8,10 @@ public section
 /-!
 # Theorem 1: the symmetry forces the quadratic factors onto the center line
 
-We formalize the central algebraic step of Theorem 1. The normalized
-quadratic factor in the paper is a nonzero scalar multiple of
-(X - C α)^2 + C (β^2); we use this monic normalization because it
-has the same roots and irreducibility.
+We formalize the central algebraic step of Theorem 1 using the exact
+normalized factor from the paper,
+1 + (X - C α)^2 / C (β^2). This is important: replacing every factor
+by its monic scalar multiple would change the infinite product itself.
 
 The hypotheses record:
 * the pointwise product representation, with each factor repeated
@@ -32,28 +32,32 @@ namespace RiemannHypothesisLean
 
 /-- Monic real quadratic with roots a ± I*b. -/
 noncomputable def quadraticFactor (a b : ℝ) : Polynomial ℝ :=
-  (Polynomial.X - Polynomial.C a) ^ 2 + Polynomial.C (b ^ 2)
+  1 + Polynomial.C ((b ^ 2)⁻¹) * (Polynomial.X - Polynomial.C a) ^ 2
 
 /-- The root represented by the upper-half-plane zero. -/
-lemma quadraticFactor_aeval_root (a b : ℝ) :
+lemma quadraticFactor_aeval_root (a b : ℝ) (hb : b ≠ 0) :
     (quadraticFactor a b).aeval ((a : ℂ) + Complex.I * b) = 0 := by
-  simp [quadraticFactor, mul_pow, Complex.I_sq, ← Complex.ofReal_pow]
+  simp [quadraticFactor, mul_pow, Complex.I_sq, ← Complex.ofReal_pow,
+    Complex.ofReal_inv] <;> field_simp [hb] <;> ring
 
 /-- If a quadratic factor vanishes at the reflected point
 k - (a + I*b), then its center and squared height satisfy the
 corresponding reflection identities. -/
 lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
-    (hb : b ≠ 0)
+    (hb : b ≠ 0) (hd : d ≠ 0)
     (hroot : (quadraticFactor c d).aeval
       ((k : ℂ) - ((a : ℂ) + Complex.I * b)) = 0) :
     a + c = k ∧ b ^ 2 = d ^ 2 := by
   let u : ℝ := k - a - c
   have hroot' :
-      ((k : ℂ) - ((a : ℂ) + Complex.I * b) - (c : ℂ)) ^ 2 + (d : ℂ) ^ 2 = 0 := by
+      1 + ((d ^ 2)⁻¹ : ℂ) *
+        (((k : ℂ) - ((a : ℂ) + Complex.I * b) - (c : ℂ)) ^ 2) = 0 := by
     simpa [quadraticFactor] using hroot
+  have hnorm : 1 + ((d ^ 2)⁻¹ : ℂ) * (((u : ℂ) - Complex.I * b) ^ 2) = 0 := by
+    convert hroot' using 1 <;> dsimp [u] <;> push_cast <;> ring
   have hval : ((u : ℂ) - Complex.I * b) ^ 2 + (d : ℂ) ^ 2 = 0 := by
-    dsimp [u]
-    convert hroot' using 1 <;> push_cast <;> ring
+    field_simp [hd] at hnorm
+    simpa [← Complex.ofReal_pow, add_comm] using hnorm
   have hvalMul : ((u : ℂ) - Complex.I * b) * ((u : ℂ) - Complex.I * b)
       + (d : ℂ) ^ 2 = 0 := by
     simpa only [pow_two] using hval
@@ -98,7 +102,7 @@ theorem theorem1_centers
   intro i
   let z : ℂ := (α i : ℂ) + Complex.I * β i
   have hzroot : (quadraticFactor (α i) (β i)).aeval z = 0 := by
-    simpa [z] using quadraticFactor_aeval_root (α i) (β i)
+    simpa [z] using quadraticFactor_aeval_root (α i) (β i) (hβ i)
   have hzeroProd : HasProd
       (fun n : ℕ => ((quadraticFactor (α n) (β n)).aeval z) ^ mult n) 0 := by
     apply hasProd_zero_of_exists_eq_zero
@@ -140,7 +144,7 @@ theorem theorem1_centers
       ((k : ℂ) - z) = 0 := by
     simpa [Polynomial.aeval_comp] using hfactorroot
   have hcoords : α i + α l = k ∧ β i ^ 2 = β l ^ 2 := by
-    apply quadraticFactor_root_coordinates (hβ i)
+    apply quadraticFactor_root_coordinates (hβ i) (hβ l)
     simpa [z] using hrootl
   have hil : i = l := hunique i l hcoords.1 hcoords.2
   subst l
