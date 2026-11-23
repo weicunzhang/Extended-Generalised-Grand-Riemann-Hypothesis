@@ -471,4 +471,35 @@ theorem theorem1_sorted_heights
   exact exists_strictMono_reindex_of_tendsto_atTop
     (fun n => |β n|) hinj htendsto
 
+
+/-- The combined conclusion of Theorem 1.
+
+The analytic hypotheses are expressed pointwise by HasProd and
+summability of the deviations from 1; the entire-function and
+locally-uniform convergence packaging from the paper is not needed
+for this implication. The summability of the weighted reciprocal
+squares supplies the increasing reindexing. -/
+theorem theorem1_full_conclusion
+    (k : ℝ)
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (F : ℂ → ℂ)
+    (hβ : ∀ i, β i ≠ 0)
+    (hmult : ∀ i, 0 < mult i)
+    (hunique : ∀ i l, α i + α l = k → β i ^ 2 = β l ^ 2 → i = l)
+    (hsym : ∀ z : ℂ, F z = F ((k : ℂ) - z))
+    (hprod : ∀ z : ℂ, HasProd
+      (fun n : ℕ => ((quadraticFactor (α n) (β n)).aeval z) ^ mult n) (F z))
+    (habsolute : ∀ z : ℂ, Summable
+      (fun n : ℕ => ‖((quadraticFactor (α n) (β n)).aeval z) ^ mult n - 1‖))
+    (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
+    (∀ i, α i = k / 2) ∧
+      ∃ σ : ℕ ≃ ℕ, 0 < |β (σ 0)| ∧ StrictMono (fun n => |β (σ n)|) := by
+  have hcenter := theorem1_centers k α β mult F hβ hmult hunique hsym hprod habsolute
+  have hinj := theorem1_abs_beta_injective k α β hcenter hunique
+  obtain ⟨σ, hmono⟩ :=
+    theorem1_sorted_heights β mult hβ hmult hinj hsum
+  refine ⟨hcenter, σ, ?_, hmono⟩
+  exact abs_pos.mpr (hβ (σ 0))
+
 end RiemannHypothesisLean
