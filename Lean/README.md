@@ -14,7 +14,7 @@ This directory contains a Lean 4 project using Mathlib, intended to formalize se
 |---|---|
 | Lemma 1: irreducible polynomial divides a finite product | Formalized and merged in PR #2; CI passed |
 | Lemma 2: divisibility for infinite products of entire functions | Formalized in PR #3 and corrected in PR #4; final CI passed |
-| Theorem 1: symmetric entire-function product theorem | Center-line conclusion, distinct heights, and strictly increasing bijective reindexing formalized in PRs #5–#6; PR #7 derives pointwise consequences from local absolute convergence; PR #8 derives the compact-wise majorant from the paper's weighted height-summability condition (CI pending) |
+| Theorem 1: symmetric entire-function product theorem | Center-line conclusion, distinct heights, and strictly increasing bijective reindexing formalized in PRs #5–#6; PR #7 derives pointwise consequences from local absolute convergence; PR #8 derives the compact-wise majorant from the weighted height-summability condition (CI passed); PR #9 formalizes locally uniform convergence of the product and its entirety (CI pending) |
 
 ## Lemma 1
 
@@ -77,4 +77,6 @@ The binomial estimate and \((1+x)^{m}\leq e^{mx}\) for \(x\geq0\) give
 \leq
 (R+k)^2 e^{(R+k)^2 A}\frac{m_i}{\beta_i^2}.
 \]
-The right-hand side is a summable sequence independent of \(z\in K\). Thus the weighted height-summability condition supplies the compact-wise summable majorant required by PR #7. PR #8 formalizes this estimate and adds a wrapper deriving the full Theorem 1 conclusion from the parameter bounds, symmetry, zero-quadruple uniqueness, and product representation. Its Lean build and axiom audit are pending.
+The right-hand side is a summable sequence independent of \(z\in K\). Thus the weighted height-summability condition supplies the compact-wise summable majorant required by PR #7. PR #8 formalizes this estimate and adds a wrapper deriving the full Theorem 1 conclusion from the parameter bounds, symmetry, zero-quadruple uniqueness, and product representation. Its Lean build and axiom audit passed in GitHub Actions Run #51.
+
+PR #9 formalizes the next analytic step. The compact-wise majorant, together with continuity of each factor, gives uniform convergence of the product on every compact set via Mathlib's `hasProdUniformlyOn_nat_one_add` theorem. The compact-wise results are assembled into local uniform convergence on \(\mathbb C\). The finite partial products are differentiable because they are finite products of polynomial functions. By the Weierstrass theorem for locally uniform limits of holomorphic functions, the pointwise infinite product is differentiable on all of \(\mathbb C\), hence entire. A final wrapper transfers this conclusion to any function identified pointwise with that product. PR #9 is a separate, stacked pull request based on PR #8; its build and axiom audit are pending.
