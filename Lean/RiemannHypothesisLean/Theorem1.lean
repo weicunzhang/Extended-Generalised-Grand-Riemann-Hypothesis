@@ -64,9 +64,9 @@ lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
   have hre := congrArg Complex.re hvalMul
   have him := congrArg Complex.im hvalMul
   simp only [Complex.add_re, Complex.sub_re, Complex.mul_re,
-    Complex.ofReal_re, Complex.I_re, Complex.I_im] at hre
+    Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im] at hre
   simp only [Complex.add_im, Complex.sub_im, Complex.mul_im,
-    Complex.ofReal_im, Complex.I_re, Complex.I_im] at him
+    Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im] at him
   have hu : u = 0 := by
     have hub : u * b = 0 := by nlinarith [him]
     rcases mul_eq_zero.mp hub with hu | hb0
