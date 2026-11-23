@@ -247,7 +247,7 @@ theorem tendstoBound_spec (r : ℕ → ℝ)
     (hn : tendstoBound r hr b ≤ n) : r b < r n :=
   Classical.choose_spec
     (Filter.eventually_atTop.mp
-      (hr.eventually (eventually_gt_atTop (r b)))) n hn
+      (hr.eventually (Filter.eventually_gt_atTop (r b)))) n hn
 
 /-- A finite set containing exactly the indices whose r-values
 lie in the closed interval [r a, r b], when r tends to +∞. -/
@@ -364,7 +364,7 @@ theorem exists_strictMono_reindex_of_tendsto_atTop
   letI : NoMaxOrder ℕ :=
     ⟨fun n => by
       have hev : ∀ᶠ m : ℕ in atTop, r n < r m :=
-        hr.eventually (eventually_gt_atTop (r n))
+        hr.eventually (Filter.eventually_gt_atTop (r n))
       obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hev
       refine ⟨N + n + 1, ?_⟩
       change r n < r (N + n + 1)
