@@ -38,8 +38,9 @@ noncomputable def quadraticFactor (a b : ℝ) : Polynomial ℝ :=
 /-- The root represented by the upper-half-plane zero. -/
 lemma quadraticFactor_aeval_root (a b : ℝ) (hb : b ≠ 0) :
     (quadraticFactor a b).aeval ((a : ℂ) + Complex.I * b) = 0 := by
-  simp [quadraticFactor, mul_pow, Complex.I_sq, ← Complex.ofReal_pow,
-    Complex.ofReal_inv] <;> field_simp [hb] <;> ring
+  simp [quadraticFactor, mul_pow, Complex.I_sq, ← Complex.ofReal_pow]
+  field_simp [hb]
+  ring
 
 /-- The normalized quadratic factor has degree two when its height is nonzero. -/
 lemma quadraticFactor_natDegree (a b : ℝ) (hb : b ≠ 0) :
@@ -49,7 +50,7 @@ lemma quadraticFactor_natDegree (a b : ℝ) (hb : b ≠ 0) :
       (Polynomial.C ((b ^ 2)⁻¹) *
         (Polynomial.X - Polynomial.C a) ^ 2).natDegree = 2 := by
     rw [Polynomial.natDegree_C_mul hscale]
-    simp [Polynomial.natDegree_X_sub_C]
+    simp
   change (1 + Polynomial.C ((b ^ 2)⁻¹) *
     (Polynomial.X - Polynomial.C a) ^ 2).natDegree = 2
   calc
@@ -106,6 +107,7 @@ lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
   have hvalMul : ((u : ℂ) - Complex.I * b) * ((u : ℂ) - Complex.I * b)
       + (d : ℂ) ^ 2 = 0 := by
     simpa only [pow_two] using hval
+  rw [← Complex.ofReal_pow] at hvalMul
   have hre := congrArg Complex.re hvalMul
   have him := congrArg Complex.im hvalMul
   simp [Complex.add_re, Complex.sub_re, Complex.mul_re,
