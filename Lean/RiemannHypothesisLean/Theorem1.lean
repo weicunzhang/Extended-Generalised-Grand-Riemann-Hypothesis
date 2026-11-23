@@ -538,7 +538,7 @@ theorem LocallyUniformlyAbsolutelySummable.hasProd
   have hdev := h.summable_deviations z
   have hmul : Multipliable (fun n => f n z) := by
     have hmul' :=
-      NormedRing.multipliable_one_add_of_summable
+      multipliable_one_add_of_summable
         (R := ℂ) (f := fun n => f n z - 1) hdev
     convert hmul' using 1
     ext n
@@ -547,7 +547,7 @@ theorem LocallyUniformlyAbsolutelySummable.hasProd
 
 /-- The factor in the normalized product representation of Theorem 1,
 including its prescribed multiplicity. -/
-def theorem1FactorTerm
+noncomputable def theorem1FactorTerm
     (α β : ℕ → ℝ) (mult : ℕ → ℕ) (n : ℕ) (z : ℂ) : ℂ :=
   ((quadraticFactor (α n) (β n)).aeval z) ^ mult n
 
