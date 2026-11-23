@@ -82,7 +82,7 @@ theorem lemma2
     (habsolutely : ∀ z : ℂ, Summable (fun n => ‖(g n).aeval z - 1‖)) :
     ∃ n, m ∣ g n := by
   obtain ⟨α, hα⟩ : ∃ α : ℂ, m.aeval α = 0 :=
-    IsAlgClosed.exists_aeval_eq_zero _ m (degree_pos_of_irreducible hm).ne'
+    IsAlgClosed.exists_aeval_eq_zero _ m (Polynomial.degree_pos_of_irreducible hm).ne'
   rcases hdiv with ⟨h, h_entire, h_eq⟩
   have hfα : f α = 0 := by
     have hfactor : f α = (m.aeval α) * h α := congrFun h_eq α
