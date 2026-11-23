@@ -61,13 +61,12 @@ lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
   have hvalMul : ((u : ℂ) - Complex.I * b) * ((u : ℂ) - Complex.I * b)
       + (d : ℂ) ^ 2 = 0 := by
     simpa only [pow_two] using hval
-  rw [← Complex.ofReal_pow] at hvalMul
   have hre := congrArg Complex.re hvalMul
   have him := congrArg Complex.im hvalMul
-  simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
-    Complex.I_re, Complex.I_im] at hre
-  simp [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_im,
-    Complex.I_re, Complex.I_im] at him
+  simp only [Complex.add_re, Complex.sub_re, Complex.mul_re,
+    Complex.ofReal_re, Complex.I_re, Complex.I_im] at hre
+  simp only [Complex.add_im, Complex.sub_im, Complex.mul_im,
+    Complex.ofReal_im, Complex.I_re, Complex.I_im] at him
   have hu : u = 0 := by
     have hub : u * b = 0 := by nlinarith [him]
     rcases mul_eq_zero.mp hub with hu | hb0
@@ -139,7 +138,7 @@ theorem theorem1_centers
   have hfactorroot :
       ((quadraticFactor (α l) (β l)).comp
         (Polynomial.C k - Polynomial.X)).aeval z = 0 :=
-    pow_eq_zero hpowroot'
+    (pow_eq_zero_iff (Nat.ne_of_gt (hmult l))).1 hpowroot'
   have hrootl : (quadraticFactor (α l) (β l)).aeval
       ((k : ℂ) - z) = 0 := by
     simpa [Polynomial.aeval_comp] using hfactorroot
