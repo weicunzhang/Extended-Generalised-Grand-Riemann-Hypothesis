@@ -1,7 +1,7 @@
 module
 
-import Mathlib
-import Mathlib.Analysis.Complex.Polynomial.Basic
+public import Mathlib
+public import Mathlib.Analysis.Complex.Polynomial.Basic
 
 public section
 
