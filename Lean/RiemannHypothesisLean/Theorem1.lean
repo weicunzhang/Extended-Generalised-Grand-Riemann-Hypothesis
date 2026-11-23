@@ -47,9 +47,12 @@ lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
       ((k : ℂ) - ((a : ℂ) + Complex.I * b)) = 0) :
     a + c = k ∧ b ^ 2 = d ^ 2 := by
   let u : ℝ := k - a - c
+  have hroot' :
+      ((k : ℂ) - ((a : ℂ) + Complex.I * b) - (c : ℂ)) ^ 2 + (d : ℂ) ^ 2 = 0 := by
+    simpa [quadraticFactor] using hroot
   have hval : ((u : ℂ) - Complex.I * b) ^ 2 + (d : ℂ) ^ 2 = 0 := by
-    simpa [u, quadraticFactor, sub_eq_add_neg, add_assoc, add_comm, add_left_comm]
-      using hroot
+    dsimp [u]
+    convert hroot' using 1 <;> push_cast <;> ring
   have hre := congrArg Complex.re hval
   have him := congrArg Complex.im hval
   simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
@@ -116,8 +119,8 @@ theorem theorem1_centers
     z (hquad i) hzroot hprodRef hsumRef
   have hpowroot :
       ((quadraticFactor (α l) (β l)).comp
-        (Polynomial.C k - Polynomial.X) ^ mult l).aeval z = 0 :=
-    (hquad i).dvd_iff_aeval_eq_zero hzroot |>.2 hdiv
+        (Polynomial.C k - Polynomial.X) ^ mult l).aeval z = 0 := by
+    exact ((hquad i).dvd_iff_aeval_eq_zero hzroot).2 hdiv
   have hfactorroot :
       ((quadraticFactor (α l) (β l)).comp
         (Polynomial.C k - Polynomial.X)).aeval z = 0 := by
