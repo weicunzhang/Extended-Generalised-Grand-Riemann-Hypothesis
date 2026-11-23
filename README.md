@@ -10,7 +10,7 @@ This repository provides a place to access and discuss the author's manuscript p
 - **Current listed version:** Version 23
 - **Posted:** 19 November 2026
 - **Version-specific DOI:** [10.20944/preprints202506.0481.v23](https://doi.org/10.20944/preprints202506.0481.v23)
-- **PDF currently stored in this repository:** [ERH-GRH-GRAND-NEW Version PDF](./ERH-GRH-GRAND%20Version.pdf)
+- **PDF currently stored in this repository:** [ERH-GRH-GRAND-NEW Version PDF](./ERH-GRH-GRAND-NEW%20Version.pdf)
 
 The PDF in this GitHub repository is identified by its filename above. Please consult the Preprints.org record for the latest version and the canonical version-specific citation.
 
