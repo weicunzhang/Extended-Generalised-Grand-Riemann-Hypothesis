@@ -599,7 +599,7 @@ lemma norm_one_add_pow_sub_one_le (w : ℂ) (m : ℕ) :
   | succ m ih =>
       have hnorm : ‖(1 : ℂ) + w‖ ≤ 1 + ‖w‖ := by
         simpa using norm_add_le (1 : ℂ) w
-      have hbase : 1 ≤ 1 + ‖w‖ := by positivity
+      have hbase : 1 ≤ 1 + ‖w‖ := le_add_of_nonneg_right (norm_nonneg w)
       have hpow : 1 ≤ (1 + ‖w‖) ^ (m + 1) :=
         one_le_pow₀ hbase
       calc
@@ -618,8 +618,7 @@ lemma norm_one_add_pow_sub_one_le (w : ℂ) (m : ℕ) :
               ring
         _ ≤ (m : ℝ) * ‖w‖ * (1 + ‖w‖) ^ (m + 1) +
               ‖w‖ * (1 + ‖w‖) ^ (m + 1) := by
-              exact add_le_add le_rfl
-                (mul_le_mul_of_nonneg_left hpow (norm_nonneg w))
+              simpa using (mul_le_mul_of_nonneg_left hpow (norm_nonneg w))
         _ = ((m + 1 : ℕ) : ℝ) * ‖w‖ * (1 + ‖w‖) ^ (m + 1) := by
               push_cast
               ring
@@ -742,8 +741,7 @@ theorem theorem1FactorTerm_locally_uniformly_absolutely_summable
   let A : ℝ := max A₀ 0
   have hA : ∀ n, (mult n : ℝ) / β n ^ 2 ≤ A := by
     intro n
-    exact (hA₀ ((mult n : ℝ) / β n ^ 2) (Set.mem_range_self n)).trans
-      (le_max_left _ _)
+    exact (hA₀ (Set.mem_range_self n)).trans (le_max_left _ _)
   have hR_nonneg : 0 ≤ R := le_max_right _ _
   have hsum_bound :
       Summable (fun n => (R + k) ^ 2 * Real.exp ((R + k) ^ 2 * A) *
