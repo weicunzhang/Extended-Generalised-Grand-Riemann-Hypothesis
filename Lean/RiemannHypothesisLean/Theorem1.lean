@@ -337,6 +337,15 @@ structure HeightIndex where
   val : ℕ
   deriving DecidableEq
 
+/-- The underlying natural-number equivalence for HeightIndex. -/
+def HeightIndex.equivNat : HeightIndex ≃ ℕ where
+  toFun := HeightIndex.val
+  invFun := HeightIndex.mk
+  left_inv x := by
+    cases x
+    rfl
+  right_inv n := rfl
+
 /-- A finite interval of indices in the height-induced order. -/
 noncomputable def tendstoIccFinsetIndex (r : ℕ → ℝ)
     (hr : Filter.Tendsto r (Filter.atTop : Filter ℕ) (Filter.atTop : Filter ℝ))
@@ -441,22 +450,13 @@ theorem exists_strictMono_reindex_of_tendsto_atTop
   letI : PredOrder HeightIndex :=
     LinearLocallyFiniteOrder.predOrder HeightIndex
   let e : HeightIndex ≃o ℕ := orderIsoNatOfLinearSuccPredArch
-  let σ : ℕ ≃ ℕ where
-    toFun n := (e.symm n).val
-    invFun n := e (HeightIndex.mk n)
-    left_inv n := by
-      change e (HeightIndex.mk ((e.symm n).val)) = n
-      have h : HeightIndex.mk ((e.symm n).val) = e.symm n :=
-        HeightIndex.ext rfl
-      rw [h, e.apply_symm_apply]
-    right_inv n := by
-      exact congrArg HeightIndex.val (e.symm_apply_apply (HeightIndex.mk n))
+  let σ : ℕ ≃ ℕ := e.symm.toEquiv.trans HeightIndex.equivNat
   refine ⟨σ, ?_⟩
   intro n m hnm
   have hlt : e.symm n < e.symm m := e.symm.strictMono hnm
   change r (e.symm n).val < r (e.symm m).val at hlt
   change r (σ n) < r (σ m)
-  exact hlt
+  simpa [σ, HeightIndex.equivNat] using hlt
 
 /-- The increasing-height conclusion of Theorem 1, with the
 reindexing made explicit as a bijection of the natural-number indices. -/
