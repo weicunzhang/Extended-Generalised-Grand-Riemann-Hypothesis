@@ -33,6 +33,7 @@ The project is pinned to Lean `v4.36.0` and Mathlib `v4.36.0`.
 From this directory, run:
 
 ```bash
+lake update
 lake exe cache get
 lake build
 ```
