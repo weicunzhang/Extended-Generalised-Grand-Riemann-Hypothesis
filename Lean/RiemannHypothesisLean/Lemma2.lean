@@ -3,6 +3,8 @@ module
 import Mathlib
 import Mathlib.Analysis.Complex.Polynomial.Basic
 
+public section
+
 /-!
 # Lemma 2: divisibility for an absolutely convergent infinite product
 
