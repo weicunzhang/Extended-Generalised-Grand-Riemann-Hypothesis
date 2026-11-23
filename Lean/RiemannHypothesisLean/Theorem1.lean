@@ -645,9 +645,7 @@ theorem theorem1FactorTerm_deviation_bound
     (hk : 0 ≤ k)
     (hR : 0 ≤ R)
     (hα : ∀ n, 0 ≤ α n ∧ α n ≤ k)
-    (hβ : ∀ n, β n ≠ 0)
     (hA : ∀ n, (mult n : ℝ) / β n ^ 2 ≤ A)
-    (hA_nonneg : 0 ≤ A)
     {z : ℂ}
     (hz : ‖z‖ ≤ R)
     (n : ℕ) :
@@ -667,7 +665,6 @@ theorem theorem1FactorTerm_deviation_bound
     exact (norm_sub_le _ _).trans (add_le_add hz hαnorm)
   have hdist_sq : ‖z - (α n : ℂ)‖ ^ 2 ≤ C ^ 2 := by
     nlinarith [sq_nonneg (C - ‖z - (α n : ℂ)‖)]
-  have hβsq : 0 < β n ^ 2 := sq_pos_of_ne_zero (hβ n)
   have hw_norm : ‖w‖ = (β n ^ 2)⁻¹ * ‖z - (α n : ℂ)‖ ^ 2 := by
     dsimp [w]
     rw [norm_mul, Complex.norm_of_nonneg (inv_nonneg.mpr (sq_nonneg (β n))),
@@ -733,7 +730,6 @@ theorem theorem1FactorTerm_locally_uniformly_absolutely_summable
     (mult : ℕ → ℕ)
     (hk : 0 ≤ k)
     (hα : ∀ n, 0 ≤ α n ∧ α n ≤ k)
-    (hβ : ∀ n, β n ≠ 0)
     (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
     LocallyUniformlyAbsolutelySummable
       (fun n z => theorem1FactorTerm α β mult n z) := by
@@ -746,7 +742,6 @@ theorem theorem1FactorTerm_locally_uniformly_absolutely_summable
     hsum.tendsto_atTop_zero.isBoundedUnder_le
   obtain ⟨A₀, hA₀⟩ := hA_bdd.bddAbove_range
   let A : ℝ := max A₀ 0
-  have hA_nonneg : 0 ≤ A := le_max_right _ _
   have hA : ∀ n, (mult n : ℝ) / β n ^ 2 ≤ A := by
     intro n
     exact (hA₀ ((mult n : ℝ) / β n ^ 2) (Set.mem_range_self n)).trans
@@ -764,7 +759,7 @@ theorem theorem1FactorTerm_locally_uniformly_absolutely_summable
     simpa [Metric.mem_closedBall, dist_eq_norm] using hzball
   have hzR : ‖z‖ ≤ R := hzR₀.trans (le_max_left _ _)
   exact theorem1FactorTerm_deviation_bound k R A α β mult hk hR_nonneg
-    hα hβ hA hA_nonneg hzR n
+    hα hA hzR n
 
 /-- The full Theorem 1 conclusion now follows from the paper's parameter
 conditions: bounded centers, nonzero heights, and summability of
@@ -788,7 +783,7 @@ theorem theorem1_full_conclusion_of_parameter_conditions
       ∃ σ : ℕ ≃ ℕ, 0 < |β (σ 0)| ∧ StrictMono (fun n => |β (σ n)|) := by
   have hlocal :=
     theorem1FactorTerm_locally_uniformly_absolutely_summable
-      k α β mult (le_of_lt hk) hα hβ hsum
+      k α β mult (le_of_lt hk) hα hsum
   exact theorem1_full_conclusion_of_local_absolute_convergence
     k α β mult F hβ hmult hunique hsym hrepresentation hlocal hsum
 
