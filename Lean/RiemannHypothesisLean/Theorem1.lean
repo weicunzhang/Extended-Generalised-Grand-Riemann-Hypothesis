@@ -107,13 +107,14 @@ lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
   have hvalMul : ((u : ℂ) - Complex.I * b) * ((u : ℂ) - Complex.I * b)
       + (d : ℂ) ^ 2 = 0 := by
     simpa only [pow_two] using hval
-  rw [← Complex.ofReal_pow] at hvalMul
+  have hwr : ((u : ℂ) - Complex.I * b).re = u := by simp
+  have hwi : ((u : ℂ) - Complex.I * b).im = -b := by simp
+  have hdre : (((d : ℂ) ^ 2).re) = d ^ 2 := by simp [Complex.mul_re]
+  have hdim : (((d : ℂ) ^ 2).im) = 0 := by simp [Complex.mul_im]
   have hre := congrArg Complex.re hvalMul
   have him := congrArg Complex.im hvalMul
-  simp [Complex.add_re, Complex.sub_re, Complex.mul_re,
-    Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im] at hre
-  simp [Complex.add_im, Complex.sub_im, Complex.mul_im,
-    Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im] at him
+  simp [Complex.add_re, Complex.mul_re, hwr, hwi, hdre] at hre
+  simp [Complex.add_im, Complex.mul_im, hwr, hwi, hdim] at him
   have hu : u = 0 := by
     have hub : u * b = 0 := by nlinarith [him]
     rcases mul_eq_zero.mp hub with hu | hb0
