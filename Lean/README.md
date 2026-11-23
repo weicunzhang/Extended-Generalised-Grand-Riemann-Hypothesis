@@ -13,8 +13,8 @@ This directory contains a Lean 4 project using Mathlib, intended to formalize se
 | Paper statement | Formalization status |
 |---|---|
 | Lemma 1: irreducible polynomial divides a finite product | Initial Lean statement and proof written; awaiting CI compilation |
-| Lemma 2: divisibility for infinite products of entire functions | Root-level and function-level Lean theorem written; CI verification pending |
-| Theorem 1: symmetric entire-function product theorem | Not yet formalized |
+| Lemma 2: divisibility for infinite products of entire functions | Lean build and axiom audit passed on PR #4; awaiting merge |
+| Theorem 1: symmetric entire-function product theorem | Center-line implication and pairwise distinctness of imaginary heights formalized; CI pending |
 
 ## Lemma 1
 
@@ -45,3 +45,8 @@ A GitHub Actions workflow builds the project and audits theorem axioms. A statem
 `RiemannHypothesisLean/Lemma2.lean` formalizes the pointwise argument at a complex root of an irreducible real polynomial. Absolute convergence at that point is expressed as summability of the norms of the deviations of the factors from `1`; the infinite product is represented by Mathlib's `HasProd`.
 
 The function-level theorem assumes an entire quotient witnessing divisibility by `m`, together with the pointwise product representation. It then proves that `m` divides one factor. This formal theorem is stronger than the paper's stated algebraic conclusion: it does not require each factor to be irreducible or to have the same degree as `m`. The global locally uniform convergence hypothesis and the condition `f(0) ≠ 0` are not needed for this root-level implication; the product's pointwise absolute convergence and the existence of the entire quotient are the hypotheses used by the proof.
+
+
+## Theorem 1
+
+`RiemannHypothesisLean/Theorem1.lean` uses the exact normalized quadratic factors from the paper, `1 + (X - C α)^2 / C (β^2)`; it does not replace them by monic scalar multiples, which would change the infinite product. It formalizes the pointwise product representation with `HasProd` and absolute convergence with summability of the deviations from `1`. Under symmetry, irreducibility of the factors, and uniqueness of the zero quadruples, it proves every center parameter equals `k / 2` and the absolute imaginary parts are pairwise distinct. The locally uniform convergence condition that ensures the product is entire is not yet encoded as a Lean hypothesis; the present proof uses its pointwise consequences. The final increasing reindexing of the distinct heights is kept as a separate step.
