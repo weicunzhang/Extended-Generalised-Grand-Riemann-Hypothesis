@@ -3,6 +3,8 @@ module
 import Mathlib
 import RiemannHypothesisLean.Lemma2
 
+public section
+
 /-!
 # Theorem 1: the symmetry forces the quadratic factors onto the center line
 
@@ -29,13 +31,14 @@ increasing enumeration of these values is a reindexing step.
 namespace RiemannHypothesisLean
 
 /-- Monic real quadratic with roots a ± I*b. -/
-def quadraticFactor (a b : ℝ) : Polynomial ℝ :=
+noncomputable def quadraticFactor (a b : ℝ) : Polynomial ℝ :=
   (Polynomial.X - Polynomial.C a) ^ 2 + Polynomial.C (b ^ 2)
 
 /-- The root represented by the upper-half-plane zero. -/
 lemma quadraticFactor_aeval_root (a b : ℝ) :
     (quadraticFactor a b).aeval ((a : ℂ) + Complex.I * b) = 0 := by
-  simp [quadraticFactor, Complex.I_sq]
+  simp [quadraticFactor]
+  rw [Complex.I_sq]
   ring
 
 /-- If a quadratic factor vanishes at the reflected point
@@ -53,8 +56,11 @@ lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
   have hval : ((u : ℂ) - Complex.I * b) ^ 2 + (d : ℂ) ^ 2 = 0 := by
     dsimp [u]
     convert hroot' using 1 <;> push_cast <;> ring
-  have hre := congrArg Complex.re hval
-  have him := congrArg Complex.im hval
+  have hvalMul : ((u : ℂ) - Complex.I * b) * ((u : ℂ) - Complex.I * b)
+      + (d : ℂ) ^ 2 = 0 := by
+    simpa only [pow_two] using hval
+  have hre := congrArg Complex.re hvalMul
+  have him := congrArg Complex.im hvalMul
   simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
     Complex.I_re, Complex.I_im] at hre
   simp [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_im,
@@ -97,7 +103,9 @@ theorem theorem1_centers
   have hzeroProd : HasProd
       (fun n : ℕ => ((quadraticFactor (α n) (β n)).aeval z) ^ mult n) 0 := by
     apply hasProd_zero_of_exists_eq_zero
-    exact ⟨i, by simp [hzroot, hmult i]⟩
+    refine ⟨i, ?_⟩
+    rw [hzroot]
+    exact zero_pow (Nat.ne_of_gt (hmult i))
   have hFzero : F z = 0 := by
     rw [← (hprod z).tprod_eq]
     exact hzeroProd.tprod_eq
@@ -159,6 +167,9 @@ theorem theorem1_abs_beta_injective
     Function.Injective (fun i => |β i|) := by
   intro i l h
   apply theorem1_beta_sq_injective k α β hcenter hunique
-  simpa [sq_abs] using congrArg (fun x : ℝ => x ^ 2) h
+  calc
+    β i ^ 2 = |β i| ^ 2 := (sq_abs (β i)).symm
+    _ = |β l| ^ 2 := by rw [h]
+    _ = β l ^ 2 := sq_abs (β l)
 
 end RiemannHypothesisLean
