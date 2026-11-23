@@ -831,10 +831,13 @@ theorem theorem1_infinite_product_is_entire
     (hlocal : LocallyUniformlyAbsolutelySummable
       (fun n z => theorem1FactorTerm α β mult n z)) :
     Differentiable ℂ (fun z => ∏' n, theorem1FactorTerm α β mult n z) := by
-  have hcts : ∀ n, Continuous (fun z => theorem1FactorTerm α β mult n z) := by
+  have hdiffFactor : ∀ n, Differentiable ℂ
+      (fun z => theorem1FactorTerm α β mult n z) := by
     intro n
     dsimp [theorem1FactorTerm]
-    fun_prop
+    exact (quadraticFactor (α n) (β n)).differentiable_aeval.pow (mult n)
+  have hcts : ∀ n, Continuous (fun z => theorem1FactorTerm α β mult n z) :=
+    fun n => (hdiffFactor n).continuous
   have hprod :=
     hlocal.hasProdLocallyUniformly
       (f := fun n z => theorem1FactorTerm α β mult n z) hcts
@@ -842,15 +845,16 @@ theorem theorem1_infinite_product_is_entire
       TendstoLocallyUniformlyOn
         (fun s z => ∏ n ∈ s, theorem1FactorTerm α β mult n z)
         (fun z => ∏' n, theorem1FactorTerm α β mult n z)
-        atTop Set.univ := by
+        Filter.atTop Set.univ := by
     simpa [HasProdLocallyUniformlyOn] using
       hprod.hasProdLocallyUniformlyOn (s := Set.univ)
   have hfinite : ∀ᶠ s : Finset ℕ in Filter.atTop,
       DifferentiableOn ℂ
         (fun z => ∏ n ∈ s, theorem1FactorTerm α β mult n z) Set.univ := by
     filter_upwards with s
-    simpa [Finset.prod_fn] using
-      (DifferentiableOn.finsetProd (fun _ _ => by fun_prop))
+    apply DifferentiableOn.finsetProd
+    intro n hn
+    exact (hdiffFactor n).differentiableOn
   have hdiff := hloc.differentiableOn hfinite isOpen_univ
   exact differentiableOn_univ.mp hdiff
 
