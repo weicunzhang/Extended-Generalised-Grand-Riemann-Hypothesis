@@ -580,7 +580,7 @@ theorem theorem1_full_conclusion_of_local_absolute_convergence
       HasProd (fun n => theorem1FactorTerm α β mult n z) (F z) := by
     intro z
     have hp := hlocal.hasProd z
-    rw [hrepresentation z] at hp
+    rw [← hrepresentation z] at hp
     exact hp
   exact theorem1_full_conclusion k α β mult F hβ hmult hunique hsym
     (by simpa [theorem1FactorTerm] using hprod)
