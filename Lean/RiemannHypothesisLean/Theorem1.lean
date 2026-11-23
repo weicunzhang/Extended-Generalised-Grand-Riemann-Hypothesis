@@ -233,4 +233,161 @@ theorem theorem1_abs_beta_injective
     _ = |β l| ^ 2 := by rw [h]
     _ = β l ^ 2 := sq_abs (β l)
 
+
+/-- A finite cutoff for a sequence tending to +∞: after this index,
+all values exceed the prescribed value r b. -/
+noncomputable def tendstoBound (r : ℕ → ℝ)
+    (hr : Tendsto r atTop atTop) (b : ℕ) : ℕ :=
+  Classical.choose
+    (Filter.eventually_atTop.mp
+      (hr.eventually (eventually_gt_atTop (r b))))
+
+theorem tendstoBound_spec (r : ℕ → ℝ)
+    (hr : Tendsto r atTop atTop) (b n : ℕ)
+    (hn : tendstoBound r hr b ≤ n) : r b < r n :=
+  Classical.choose_spec
+    (Filter.eventually_atTop.mp
+      (hr.eventually (eventually_gt_atTop (r b)))) n hn
+
+/-- A finite set containing exactly the indices whose r-values
+lie in the closed interval [r a, r b], when r tends to +∞. -/
+noncomputable def tendstoIccFinset (r : ℕ → ℝ)
+    (hr : Tendsto r atTop atTop) (a b : ℕ) : Finset ℕ := by
+  classical
+  exact (Finset.range (tendstoBound r hr b)).filter
+    (fun n => r a ≤ r n ∧ r n ≤ r b)
+
+theorem mem_tendstoIccFinset (r : ℕ → ℝ)
+    (hr : Tendsto r atTop atTop) (a b x : ℕ) :
+    x ∈ tendstoIccFinset r hr a b ↔ r a ≤ r x ∧ r x ≤ r b := by
+  classical
+  simp only [tendstoIccFinset, Finset.mem_filter, Finset.mem_range]
+  constructor
+  · rintro ⟨_, hax, hxb⟩
+    exact ⟨hax, hxb⟩
+  · rintro ⟨hax, hxb⟩
+    refine ⟨?_, hax, hxb⟩
+    by_contra hx
+    have hx' : tendstoBound r hr b ≤ x := Nat.le_of_not_gt hx
+    exact (not_lt_of_ge hxb) (tendstoBound_spec r hr b x hx')
+
+/-- If sum mult n / beta n^2 converges and every multiplicity is positive,
+then the absolute heights tend to infinity. -/
+theorem theorem1_abs_beta_tendsto_atTop
+    (β : ℕ → ℝ) (mult : ℕ → ℕ)
+    (hβ : ∀ n, β n ≠ 0)
+    (hmult : ∀ n, 0 < mult n)
+    (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
+    Tendsto (fun n => |β n|) atTop atTop := by
+  have hsum' : Summable (fun n => (mult n : ℝ) * (β n ^ 2)⁻¹) := by
+    simpa only [div_eq_mul_inv] using hsum
+  have hrecip : Summable (fun n => (|β n| ^ 2)⁻¹) := by
+    apply Summable.of_nonneg_of_le
+    · intro n
+      exact inv_nonneg.mpr (sq_nonneg (|β n|))
+    · intro n
+      have hmult1 : (1 : ℝ) ≤ (mult n : ℝ) := by
+        exact_mod_cast (Nat.succ_le_of_lt (hmult n))
+      rw [sq_abs]
+      exact mul_le_mul_of_nonneg_right hmult1
+        (inv_nonneg.mpr (sq_nonneg (β n)))
+    · exact hsum'
+  have hzero : Tendsto (fun n => (|β n| ^ 2)⁻¹) atTop (𝓝 0) :=
+    hrecip.tendsto_atTop_zero
+  refine tendsto_atTop.2 ?_
+  intro B
+  let C : ℝ := max B 0 + 1
+  have hCpos : 0 < C := by
+    dsimp [C]
+    positivity
+  have hBC : B < C := by
+    dsimp [C]
+    linarith [le_max_left B 0]
+  have hsmall : ∀ᶠ n : ℕ in atTop, (|β n| ^ 2)⁻¹ < (C ^ 2)⁻¹ := by
+    have hnhds : Set.Iio ((C ^ 2)⁻¹) ∈ 𝓝 (0 : ℝ) :=
+      Iio_mem_nhds (by positivity)
+    exact hzero.eventually hnhds
+  obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hsmall
+  refine ⟨N, ?_⟩
+  intro n hn
+  have hβpos : 0 < |β n| := abs_pos.mpr (hβ n)
+  have hsq : C ^ 2 < |β n| ^ 2 :=
+    (inv_lt_inv₀ (pow_pos hβpos 2) (pow_pos hCpos 2)).1 (hN n hn)
+  have hCr : C < |β n| := by
+    nlinarith
+  exact hBC.trans hCr
+
+/-- A sequence of distinct real numbers tending to +∞ can be
+reindexed by a permutation of ℕ so that it is strictly increasing.
+
+The proof equips ℕ with the order induced by the sequence. Its
+bounded intervals are finite, it has a least element and no greatest
+element, and hence it is order-isomorphic to the usual natural numbers. -/
+theorem exists_strictMono_reindex_of_tendsto_atTop
+    (r : ℕ → ℝ) (hinj : Function.Injective r)
+    (hr : Tendsto r atTop atTop) :
+    ∃ σ : ℕ ≃ ℕ, StrictMono (fun n => r (σ n)) := by
+  classical
+  letI : LinearOrder ℕ := LinearOrder.lift' r hinj
+  letI : LocallyFiniteOrder ℕ :=
+    LocallyFiniteOrder.ofIcc' ℕ (tendstoIccFinset r hr) (by
+      intro a b x
+      change x ∈ tendstoIccFinset r hr a b ↔ r a ≤ r x ∧ r x ≤ r b
+      exact mem_tendstoIccFinset r hr a b x)
+  let N0 : ℕ := tendstoBound r hr 0
+  have hN0 : 0 < N0 := by
+    by_contra hN0
+    have hN0' : N0 = 0 := Nat.eq_zero_of_not_pos hN0
+    have hle : tendstoBound r hr 0 ≤ 0 := by
+      simpa [N0, hN0']
+    have hcontr : r 0 < r 0 := tendstoBound_spec r hr 0 0 hle
+    exact (lt_irrefl (r 0)) hcontr
+  let S : Finset ℕ := (Finset.range N0).filter (fun n => r n ≤ r 0)
+  have h0S : 0 ∈ S := by
+    simp [S, hN0]
+  let b : ℕ := S.min' h0S
+  have hbS : b ∈ S := by
+    exact Finset.min'_mem S h0S
+  have hbr0 : r b ≤ r 0 := (Finset.mem_filter.mp hbS).2
+  letI : OrderBot ℕ :=
+    ⟨b, fun n => by
+      change r b ≤ r n
+      by_cases hn : n < N0
+      · by_cases hle : r n ≤ r 0
+        · exact Finset.min'_le S n (by simp [S, hn, hle])
+        · exact le_of_lt (hbr0.trans_lt (lt_of_not_ge hle))
+      · have h0n : r 0 < r n :=
+          tendstoBound_spec r hr 0 n (Nat.le_of_not_gt hn)
+        exact le_of_lt (hbr0.trans_lt h0n)⟩
+  letI : NoMaxOrder ℕ :=
+    ⟨fun n => by
+      have hev : ∀ᶠ m : ℕ in atTop, r n < r m :=
+        hr.eventually (eventually_gt_atTop (r n))
+      obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hev
+      refine ⟨N + n + 1, ?_⟩
+      change r n < r (N + n + 1)
+      exact hN _ (by omega)⟩
+  letI : SuccOrder ℕ := LinearLocallyFiniteOrder.succOrder ℕ
+  letI : PredOrder ℕ := LinearLocallyFiniteOrder.predOrder ℕ
+  let e : ℕ ≃o ℕ := LinearLocallyFiniteOrder.orderIsoNatOfLinearSuccPredArch
+  let σ : ℕ ≃ ℕ := e.symm.toEquiv
+  refine ⟨σ, ?_⟩
+  intro n m hnm
+  have hlt : e.symm n < e.symm m := e.symm.strictMono hnm
+  change r (σ n) < r (σ m)
+  exact hlt
+
+/-- The increasing-height conclusion of Theorem 1, with the
+reindexing made explicit as a bijection of the natural-number indices. -/
+theorem theorem1_sorted_heights
+    (β : ℕ → ℝ) (mult : ℕ → ℕ)
+    (hβ : ∀ n, β n ≠ 0)
+    (hmult : ∀ n, 0 < mult n)
+    (hinj : Function.Injective (fun n => |β n|))
+    (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
+    ∃ σ : ℕ ≃ ℕ, StrictMono (fun n => |β (σ n)|) := by
+  have htendsto := theorem1_abs_beta_tendsto_atTop β mult hβ hmult hsum
+  exact exists_strictMono_reindex_of_tendsto_atTop
+    (fun n => |β n|) hinj htendsto
+
 end RiemannHypothesisLean
