@@ -107,8 +107,10 @@ lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
   have hvalMul : ((u : ℂ) - Complex.I * b) * ((u : ℂ) - Complex.I * b)
       + (d : ℂ) ^ 2 = 0 := by
     simpa only [pow_two] using hval
-  have hwr : ((u : ℂ) - Complex.I * b).re = u := by simp
-  have hwi : ((u : ℂ) - Complex.I * b).im = -b := by simp
+  have hwr : ((u : ℂ) - Complex.I * b).re = u := by
+    simp [Complex.sub_re, Complex.mul_re]
+  have hwi : ((u : ℂ) - Complex.I * b).im = -b := by
+    simp [Complex.sub_im, Complex.mul_im]
   have hdre : (((d : ℂ) ^ 2).re) = d ^ 2 := by
     simp only [pow_two, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im]
     ring
