@@ -12,9 +12,9 @@ This directory contains a Lean 4 project using Mathlib, intended to formalize se
 
 | Paper statement | Formalization status |
 |---|---|
-| Lemma 1: irreducible polynomial divides a finite product | Initial Lean statement and proof written; awaiting CI compilation |
-| Lemma 2: divisibility for infinite products of entire functions | Lean build and axiom audit passed on PR #4; awaiting merge |
-| Theorem 1: symmetric entire-function product theorem | Center-line implication and pairwise distinctness of imaginary heights formalized; CI pending |
+| Lemma 1: irreducible polynomial divides a finite product | Formalized and merged in PR #2; CI passed |
+| Lemma 2: divisibility for infinite products of entire functions | Formalized in PR #3 and corrected in PR #4; final CI passed |
+| Theorem 1: symmetric entire-function product theorem | Center-line conclusion, distinct heights, and strictly increasing bijective reindexing formalized in PRs #5–#6; final CI passed. PR #7 adds the local absolute-convergence bridge |
 
 ## Lemma 1
 
@@ -49,4 +49,14 @@ The function-level theorem assumes an entire quotient witnessing divisibility by
 
 ## Theorem 1
 
-`RiemannHypothesisLean/Theorem1.lean` uses the exact normalized quadratic factors from the paper, `1 + (X - C α)^2 / C (β^2)`; it does not replace them by monic scalar multiples, which would change the infinite product. It formalizes the pointwise product representation with `HasProd` and absolute convergence with summability of the deviations from `1`. Under symmetry, irreducibility of the factors, and uniqueness of the zero quadruples, it proves every center parameter equals `k / 2` and the absolute imaginary parts are pairwise distinct. The locally uniform convergence condition that ensures the product is entire is not yet encoded as a Lean hypothesis; the present proof uses its pointwise consequences. The final increasing reindexing of the distinct heights is kept as a separate step.
+`RiemannHypothesisLean/Theorem1.lean` uses the exact normalized quadratic factors from the paper, `1 + (X - C α)^2 / C (β^2)`; it does not replace them by monic scalar multiples, which would change the infinite product.
+
+The formalization is layered:
+
+1. Under the symmetry, irreducibility, and uniqueness of zero quadruples, it proves that every center parameter equals `k / 2`.
+2. It proves that the absolute imaginary parts are pairwise distinct.
+3. Using the summability condition `∑ mᵢ / βᵢ² < ∞`, it proves that the heights tend to infinity and constructs a bijective reindexing under which they are strictly increasing.
+
+The lower-level theorem uses pointwise `HasProd` and summability of the deviations from `1`. PR #7 adds a formal bridge from local uniform absolute convergence to these pointwise conditions. Local uniform absolute convergence is expressed by a compact-wise summable majorant: on each compact set, one summable sequence bounds all factor deviations uniformly. Taking a singleton gives pointwise summability; Mathlib's summable-product theorem then gives `HasProd`. The pointwise representation identifies the resulting product with `F(z)`.
+
+This is specifically an absolute-convergence condition on the factor deviations, not merely convergence of the partial products uniformly on compact sets. The entire-function packaging is stronger than what the pointwise root argument itself needs.
