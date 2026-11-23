@@ -27,18 +27,6 @@ The manuscript applies this framework to Dirichlet \(L\)-functions (GRH), Dedeki
 
 These points summarize the manuscript's stated approach and claims; they are not an independent verification of its arguments or conclusions.
 
-## Research status
-
-The current Preprints.org record identifies Version 23 as a **preprint that has not been peer-reviewed**. The claimed consequences for ERH, GRH, Grand RH, and Landau–Siegel zeros are the author's claims in the manuscript. Readers should assess the hypotheses on the relevant \(L\)-functions, the product representations and convergence, the divisibility argument, and the multiplicity reasoning independently.
-
-This GitHub repository is intended for access to the manuscript and constructive mathematical discussion. Its presence here does not imply peer-review, journal acceptance, or endorsement by GitHub.
-
-## How to provide feedback
-
-For a focused mathematical comment, please open a GitHub Issue and identify the precise page, equation, lemma, or inference under discussion. A useful report should state the relevant assumptions and explain the question, objection, or proposed correction as precisely as possible.
-
-For the latest manuscript text and version history, use the [official Preprints.org record](https://www.preprints.org/manuscript/202506.0481).
-
 ## Citation
 
 Weicun Zhang (2026). *On the Extended, Generalized, and Grand Riemann Hypotheses: A Unified Approach via the Divisibility Property of Entire Functions*. Preprints.org, Version 23. https://doi.org/10.20944/preprints202506.0481.v23
