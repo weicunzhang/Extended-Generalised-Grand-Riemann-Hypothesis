@@ -327,7 +327,7 @@ theorem theorem1_abs_beta_tendsto_atTop
     (inv_lt_inv₀ (pow_pos hβpos 2) (pow_pos hCpos 2)).1 (hN n hn)
   have hCr : C < |β n| := by
     nlinarith
-  exact hBC.trans hCr
+  exact (hBC.trans hCr).le
 
 /-- A copy of the natural-number index type, used to equip the indices
 with the order induced by their real heights without changing the usual
@@ -444,8 +444,14 @@ theorem exists_strictMono_reindex_of_tendsto_atTop
   let σ : ℕ ≃ ℕ where
     toFun n := (e.symm n).val
     invFun n := e (HeightIndex.mk n)
-    left_inv n := by simp
-    right_inv n := by simp
+    left_inv n := by
+      change e (HeightIndex.mk ((e.symm n).val)) = n
+      have h : HeightIndex.mk ((e.symm n).val) = e.symm n := by
+        cases e.symm n
+        rfl
+      rw [h, e.apply_symm_apply]
+    right_inv n := by
+      exact congrArg HeightIndex.val (e.symm_apply_apply (HeightIndex.mk n))
   refine ⟨σ, ?_⟩
   intro n m hnm
   have hlt : e.symm n < e.symm m := e.symm.strictMono hnm
