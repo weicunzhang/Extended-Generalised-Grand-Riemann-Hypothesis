@@ -783,4 +783,93 @@ theorem theorem1_full_conclusion_of_parameter_conditions
   exact theorem1_full_conclusion_of_local_absolute_convergence
     k α β mult F hβ hmult hunique hsym hrepresentation hlocal hsum
 
+
+/-- A compact-wise summable majorant for the deviations from one, together
+with continuity of each factor, implies locally uniform convergence of the
+infinite product to its pointwise infinite-product value. -/
+theorem LocallyUniformlyAbsolutelySummable.hasProdLocallyUniformly
+    {f : ℕ → ℂ → ℂ}
+    (h : LocallyUniformlyAbsolutelySummable f)
+    (hcts : ∀ n, Continuous (f n)) :
+    HasProdLocallyUniformly f (fun z => ∏' n, f n z) := by
+  apply hasProdLocallyUniformly_of_forall_compact
+  intro K hK
+  obtain ⟨bound, hbound, hdom⟩ := h K hK
+  let deviation : ℕ → ℂ → ℂ := fun n z => f n z - 1
+  have hcts' : ∀ n, ContinuousOn (deviation n) K := by
+    intro n
+    dsimp [deviation]
+    exact (hcts n).continuousOn.sub continuousOn_const
+  have hprod :=
+    hbound.hasProdUniformlyOn_nat_one_add hK
+      (Filter.Eventually.of_forall fun n z hz => hdom n z hz)
+      hcts'
+  have hfactor : ∀ n z, 1 + deviation n z = f n z := by
+    intro n z
+    dsimp [deviation]
+    ring
+  have hprodFactors :
+      HasProdUniformlyOn f (fun z => ∏' n, (1 + deviation n z)) K := by
+    apply hprod.congr
+    exact Filter.Eventually.of_forall fun s z hz => by
+      apply Finset.prod_congr rfl
+      intro n hn
+      exact hfactor n z
+  have htprod : ∀ z, (∏' n, (1 + deviation n z)) = ∏' n, f n z := by
+    intro z
+    apply tprod_congr
+    intro n
+    exact hfactor n z
+  exact hprodFactors.congr_right (fun z hz => htprod z)
+
+/-- The locally uniformly convergent infinite product in Theorem 1 is an
+entire function. Each finite partial product is a polynomial in z, and
+the locally uniform limit theorem for holomorphic functions applies. -/
+theorem theorem1_infinite_product_is_entire
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (hlocal : LocallyUniformlyAbsolutelySummable
+      (fun n z => theorem1FactorTerm α β mult n z)) :
+    Differentiable ℂ (fun z => ∏' n, theorem1FactorTerm α β mult n z) := by
+  have hcts : ∀ n, Continuous (fun z => theorem1FactorTerm α β mult n z) := by
+    intro n
+    dsimp [theorem1FactorTerm]
+    fun_prop
+  have hprod :=
+    hlocal.hasProdLocallyUniformly
+      (f := fun n z => theorem1FactorTerm α β mult n z) hcts
+  have hloc :
+      TendstoLocallyUniformlyOn
+        (fun s z => ∏ n ∈ s, theorem1FactorTerm α β mult n z)
+        (fun z => ∏' n, theorem1FactorTerm α β mult n z)
+        atTop Set.univ := by
+    simpa [HasProdLocallyUniformlyOn] using
+      hprod.hasProdLocallyUniformlyOn (s := Set.univ)
+  have hfinite : ∀ᶠ s : Finset ℕ in Filter.atTop,
+      DifferentiableOn ℂ
+        (fun z => ∏ n ∈ s, theorem1FactorTerm α β mult n z) Set.univ := by
+    filter_upwards with s
+    simpa [Finset.prod_fn] using
+      (DifferentiableOn.finsetProd (fun _ _ => by fun_prop))
+  have hdiff := hloc.differentiableOn hfinite isOpen_univ
+  exact differentiableOn_univ.mp hdiff
+
+/-- If F is represented by the locally uniformly convergent product in
+Theorem 1, then F is entire; this derives rather than assumes its
+holomorphy from the factor representation and the compact-wise majorant. -/
+theorem theorem1_representation_is_entire
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (F : ℂ → ℂ)
+    (hrepresentation : ∀ z : ℂ,
+      F z = ∏' n : ℕ, theorem1FactorTerm α β mult n z)
+    (hlocal : LocallyUniformlyAbsolutelySummable
+      (fun n z => theorem1FactorTerm α β mult n z)) :
+    Differentiable ℂ F := by
+  have hprod := theorem1_infinite_product_is_entire α β mult hlocal
+  have hEq : F = fun z => ∏' n, theorem1FactorTerm α β mult n z :=
+    funext hrepresentation
+  rw [hEq]
+  exact hprod
+
 end RiemannHypothesisLean
