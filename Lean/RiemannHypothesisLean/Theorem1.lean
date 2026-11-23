@@ -446,9 +446,8 @@ theorem exists_strictMono_reindex_of_tendsto_atTop
     invFun n := e (HeightIndex.mk n)
     left_inv n := by
       change e (HeightIndex.mk ((e.symm n).val)) = n
-      have h : HeightIndex.mk ((e.symm n).val) = e.symm n := by
-        cases e.symm n
-        rfl
+      have h : HeightIndex.mk ((e.symm n).val) = e.symm n :=
+        HeightIndex.ext rfl
       rw [h, e.apply_symm_apply]
     right_inv n := by
       exact congrArg HeightIndex.val (e.symm_apply_apply (HeightIndex.mk n))
