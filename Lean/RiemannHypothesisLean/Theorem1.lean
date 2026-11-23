@@ -502,4 +502,89 @@ theorem theorem1_full_conclusion
   refine ⟨hcenter, σ, ?_, hmono⟩
   exact abs_pos.mpr (hβ (σ 0))
 
+
+/-- A sequence of complex-valued functions is locally uniformly absolutely
+summable as deviations from one if, on every compact set, its deviations
+are bounded by one summable sequence independent of the point in that set.
+
+This is the standard majorant formulation of locally uniform absolute
+convergence for the infinite product. -/
+def LocallyUniformlyAbsolutelySummable (f : ℕ → ℂ → ℂ) : Prop :=
+  ∀ K : Set ℂ, IsCompact K →
+    ∃ bound : ℕ → ℝ,
+      Summable bound ∧
+      ∀ n z, z ∈ K → ‖f n z - 1‖ ≤ bound n
+
+/-- Locally uniform absolute summability implies pointwise absolute
+summability of the deviations from one. -/
+theorem LocallyUniformlyAbsolutelySummable.summable_deviations
+    {f : ℕ → ℂ → ℂ}
+    (h : LocallyUniformlyAbsolutelySummable f) (z : ℂ) :
+    Summable (fun n => ‖f n z - 1‖) := by
+  obtain ⟨bound, hbound, hdom⟩ := h {z} (isCompact_singleton (x := z))
+  apply Summable.of_nonneg_of_le
+  · intro n
+    exact norm_nonneg _
+  · intro n
+    exact hdom n z (by simp)
+  · exact hbound
+
+/-- Absolute summability of the deviations from one gives a convergent
+infinite product. This packages the pointwise passage to HasProd. -/
+theorem LocallyUniformlyAbsolutelySummable.hasProd
+    {f : ℕ → ℂ → ℂ}
+    (h : LocallyUniformlyAbsolutelySummable f) (z : ℂ) :
+    HasProd (fun n => f n z) (∏' n, f n z) := by
+  have hdev := h.summable_deviations z
+  have hmul : Multipliable (fun n => f n z) := by
+    have hmul' :=
+      NormedRing.multipliable_one_add_of_summable
+        (R := ℂ) (f := fun n => f n z - 1) hdev
+    convert hmul' using 1
+    ext n
+    ring
+  exact hmul.hasProd
+
+/-- The factor in the normalized product representation of Theorem 1,
+including its prescribed multiplicity. -/
+def theorem1FactorTerm
+    (α β : ℕ → ℝ) (mult : ℕ → ℕ) (n : ℕ) (z : ℂ) : ℂ :=
+  ((quadraticFactor (α n) (β n)).aeval z) ^ mult n
+
+/-- Theorem 1 with the pointwise product and pointwise absolute-convergence
+hypotheses derived from local uniform absolute convergence.
+
+The representation hypothesis identifies F with the infinite product.
+The compact-wise summable majorant yields both HasProd and pointwise
+summability of the deviations, so neither is assumed separately here. -/
+theorem theorem1_full_conclusion_of_local_absolute_convergence
+    (k : ℝ)
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (F : ℂ → ℂ)
+    (hβ : ∀ i, β i ≠ 0)
+    (hmult : ∀ i, 0 < mult i)
+    (hunique : ∀ i l, α i + α l = k → β i ^ 2 = β l ^ 2 → i = l)
+    (hsym : ∀ z : ℂ, F z = F ((k : ℂ) - z))
+    (hrepresentation : ∀ z : ℂ,
+      F z = ∏' n : ℕ, theorem1FactorTerm α β mult n z)
+    (hlocal : LocallyUniformlyAbsolutelySummable
+      (fun n z => theorem1FactorTerm α β mult n z))
+    (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
+    (∀ i, α i = k / 2) ∧
+      ∃ σ : ℕ ≃ ℕ, 0 < |β (σ 0)| ∧ StrictMono (fun n => |β (σ n)|) := by
+  have habsolute : ∀ z : ℂ,
+      Summable (fun n => ‖theorem1FactorTerm α β mult n z - 1‖) :=
+    fun z => hlocal.summable_deviations z
+  have hprod : ∀ z : ℂ,
+      HasProd (fun n => theorem1FactorTerm α β mult n z) (F z) := by
+    intro z
+    have hp := hlocal.hasProd z
+    rw [hrepresentation z] at hp
+    exact hp
+  exact theorem1_full_conclusion k α β mult F hβ hmult hunique hsym
+    (by simpa [theorem1FactorTerm] using hprod)
+    (by simpa [theorem1FactorTerm] using habsolute)
+    hsum
+
 end RiemannHypothesisLean
