@@ -37,9 +37,7 @@ noncomputable def quadraticFactor (a b : ℝ) : Polynomial ℝ :=
 /-- The root represented by the upper-half-plane zero. -/
 lemma quadraticFactor_aeval_root (a b : ℝ) :
     (quadraticFactor a b).aeval ((a : ℂ) + Complex.I * b) = 0 := by
-  simp [quadraticFactor]
-  rw [Complex.I_sq]
-  ring
+  simp [quadraticFactor, mul_pow, Complex.I_sq, ← Complex.ofReal_pow]
 
 /-- If a quadratic factor vanishes at the reflected point
 k - (a + I*b), then its center and squared height satisfy the
@@ -59,6 +57,7 @@ lemma quadraticFactor_root_coordinates {a b c d k : ℝ}
   have hvalMul : ((u : ℂ) - Complex.I * b) * ((u : ℂ) - Complex.I * b)
       + (d : ℂ) ^ 2 = 0 := by
     simpa only [pow_two] using hval
+  rw [← Complex.ofReal_pow] at hvalMul
   have hre := congrArg Complex.re hvalMul
   have him := congrArg Complex.im hvalMul
   simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
@@ -129,11 +128,14 @@ theorem theorem1_centers
       ((quadraticFactor (α l) (β l)).comp
         (Polynomial.C k - Polynomial.X) ^ mult l).aeval z = 0 := by
     exact ((hquad i).dvd_iff_aeval_eq_zero hzroot).2 hdiv
+  have hpowroot' :
+      (((quadraticFactor (α l) (β l)).comp
+        (Polynomial.C k - Polynomial.X)).aeval z) ^ mult l = 0 := by
+    simpa only [map_pow] using hpowroot
   have hfactorroot :
       ((quadraticFactor (α l) (β l)).comp
-        (Polynomial.C k - Polynomial.X)).aeval z = 0 := by
-    rw [Polynomial.aeval_pow] at hpowroot
-    exact pow_eq_zero hpowroot
+        (Polynomial.C k - Polynomial.X)).aeval z = 0 :=
+    pow_eq_zero hpowroot'
   have hrootl : (quadraticFactor (α l) (β l)).aeval
       ((k : ℂ) - z) = 0 := by
     simpa [Polynomial.aeval_comp] using hfactorroot
@@ -166,6 +168,7 @@ theorem theorem1_abs_beta_injective
     (hunique : ∀ i l, α i + α l = k → β i ^ 2 = β l ^ 2 → i = l) :
     Function.Injective (fun i => |β i|) := by
   intro i l h
+  change |β i| = |β l| at h
   apply theorem1_beta_sq_injective k α β hcenter hunique
   calc
     β i ^ 2 = |β i| ^ 2 := (sq_abs (β i)).symm
