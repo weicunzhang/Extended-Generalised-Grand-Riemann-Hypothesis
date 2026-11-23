@@ -326,25 +326,59 @@ theorem theorem1_abs_beta_tendsto_atTop
     nlinarith
   exact hBC.trans hCr
 
+/-- A finite interval of indices, lifted to a type synonym so that
+the order induced by r does not overwrite the usual order on ℕ. -/
+noncomputable def tendstoIccFinsetULift (r : ℕ → ℝ)
+    (hr : Filter.Tendsto r (Filter.atTop : Filter ℕ) (Filter.atTop : Filter ℝ))
+    (a b : ULift ℕ) : Finset (ULift ℕ) := by
+  classical
+  exact ((Finset.range (tendstoBound r hr b.down)).image ULift.up).filter
+    (fun n => r a.down ≤ r n.down ∧ r n.down ≤ r b.down)
+
+theorem mem_tendstoIccFinsetULift (r : ℕ → ℝ)
+    (hr : Filter.Tendsto r (Filter.atTop : Filter ℕ) (Filter.atTop : Filter ℝ))
+    (a b x : ULift ℕ) :
+    x ∈ tendstoIccFinsetULift r hr a b ↔
+      r a.down ≤ r x.down ∧ r x.down ≤ r b.down := by
+  classical
+  simp only [tendstoIccFinsetULift, Finset.mem_filter, Finset.mem_image, Finset.mem_range]
+  constructor
+  · rintro ⟨⟨n, hn, hEq⟩, hax, hxb⟩
+    cases hEq
+    exact ⟨hax, hxb⟩
+  · rintro ⟨hax, hxb⟩
+    refine ⟨⟨x.down, ?_, ?_⟩, hax, hxb⟩
+    · by_contra hx
+      have hbound : tendstoBound r hr b.down ≤ x.down := Nat.le_of_not_gt hx
+      exact (not_lt_of_ge hxb) (tendstoBound_spec r hr b.down x.down hbound)
+    · cases x
+      rfl
+
 /-- A sequence of distinct real numbers tending to +∞ can be
 reindexed by a permutation of ℕ so that it is strictly increasing.
 
-The proof equips ℕ with the order induced by the sequence. Its
-bounded intervals are finite, it has a least element and no greatest
-element, and hence it is order-isomorphic to the usual natural numbers. -/
+We use ULift for the ordered index type, keeping the target ℕ in the
+usual order. Bounded intervals in the induced order are finite; the
+order has a least element and no greatest element. -/
 theorem exists_strictMono_reindex_of_tendsto_atTop
     (r : ℕ → ℝ) (hinj : Function.Injective r)
     (hr : Filter.Tendsto r (Filter.atTop : Filter ℕ) (Filter.atTop : Filter ℝ)) :
     ∃ σ : ℕ ≃ ℕ, StrictMono (fun n => r (σ n)) := by
   classical
-  letI : LinearOrder ℕ := LinearOrder.lift' r hinj
-  letI : LE ℕ := ⟨fun a b => r a ≤ r b⟩
-  letI : LT ℕ := ⟨fun a b => r a < r b⟩
-  letI : LocallyFiniteOrder ℕ :=
-    LocallyFiniteOrder.ofIcc' ℕ (tendstoIccFinset r hr) (by
+  let rLift : ULift ℕ → ℝ := fun n => r n.down
+  have hrLiftInj : Function.Injective rLift := by
+    intro a b hab
+    apply ULift.down_injective
+    exact hinj hab
+  letI : LinearOrder (ULift ℕ) := LinearOrder.lift' rLift hrLiftInj
+  letI : LE (ULift ℕ) := ⟨fun a b => r a.down ≤ r b.down⟩
+  letI : LT (ULift ℕ) := ⟨fun a b => r a.down < r b.down⟩
+  letI : LocallyFiniteOrder (ULift ℕ) :=
+    LocallyFiniteOrder.ofIcc' (ULift ℕ) (tendstoIccFinsetULift r hr) (by
       intro a b x
-      change x ∈ tendstoIccFinset r hr a b ↔ r a ≤ r x ∧ r x ≤ r b
-      exact mem_tendstoIccFinset r hr a b x)
+      change x ∈ tendstoIccFinsetULift r hr a b ↔
+        r a.down ≤ r x.down ∧ r x.down ≤ r b.down
+      exact mem_tendstoIccFinsetULift r hr a b x)
   let N0 : ℕ := tendstoBound r hr 0
   have hN0 : 0 < N0 := by
     by_contra hN0
@@ -353,40 +387,50 @@ theorem exists_strictMono_reindex_of_tendsto_atTop
       simpa [N0, hN0']
     have hcontr : r 0 < r 0 := tendstoBound_spec r hr 0 0 hle
     exact (lt_irrefl (r 0)) hcontr
-  let S : Finset ℕ := (Finset.range N0).filter (fun n => r n ≤ r 0)
-  have h0S : 0 ∈ S := by
+  let S : Finset (ULift ℕ) :=
+    ((Finset.range N0).image ULift.up).filter (fun n => r n.down ≤ r 0)
+  have h0S : ULift.up 0 ∈ S := by
     simp [S, hN0]
-  have hS : S.Nonempty := ⟨0, h0S⟩
-  let b : ℕ := S.min' hS
-  have hbS : b ∈ S := by
-    exact Finset.min'_mem S hS
-  have hbr0 : r b ≤ r 0 := (Finset.mem_filter.mp hbS).2
-  letI : Bot ℕ := ⟨b⟩
-  letI : OrderBot ℕ :=
+  have hS : S.Nonempty := ⟨ULift.up 0, h0S⟩
+  let b : ULift ℕ := S.min' hS
+  have hbS : b ∈ S := Finset.min'_mem S hS
+  have hbr0 : r b.down ≤ r 0 := (Finset.mem_filter.mp hbS).2
+  letI : Bot (ULift ℕ) := ⟨b⟩
+  letI : OrderBot (ULift ℕ) :=
     ⟨fun n => by
-      change r b ≤ r n
-      by_cases hn : n < N0
-      · by_cases hle : r n ≤ r 0
-        · exact Finset.min'_le S hS n (by simp [S, hn, hle])
+      change r b.down ≤ r n.down
+      by_cases hn : n.down < N0
+      · by_cases hle : r n.down ≤ r 0
+        · have hnS : n ∈ S := by
+            simp [S, hn, hle]
+          exact Finset.min'_le S hS n hnS
         · exact le_of_lt (hbr0.trans_lt (lt_of_not_ge hle))
-      · have h0n : r 0 < r n :=
-          tendstoBound_spec r hr 0 n (Nat.le_of_not_gt hn)
+      · have h0n : r 0 < r n.down :=
+          tendstoBound_spec r hr 0 n.down (Nat.le_of_not_gt hn)
         exact le_of_lt (hbr0.trans_lt h0n)⟩
-  letI : NoMaxOrder ℕ :=
+  letI : NoMaxOrder (ULift ℕ) :=
     ⟨fun n => by
-      have hev : ∀ᶠ m : ℕ in atTop, r n < r m :=
-        hr.eventually (Filter.eventually_gt_atTop (r n))
+      have hev : ∀ᶠ m : ℕ in Filter.atTop, r n.down < r m :=
+        hr.eventually (Filter.eventually_gt_atTop (r n.down))
       obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hev
-      refine ⟨N + n + 1, ?_⟩
-      change r n < r (N + n + 1)
+      refine ⟨ULift.up (N + n.down + 1), ?_⟩
+      change r n.down < r (N + n.down + 1)
       exact hN _ (by omega)⟩
-  letI : SuccOrder ℕ := LinearLocallyFiniteOrder.succOrder ℕ
-  letI : PredOrder ℕ := LinearLocallyFiniteOrder.predOrder ℕ
-  let e : ℕ ≃o ℕ := LinearLocallyFiniteOrder.orderIsoNatOfLinearSuccPredArch
-  let σ : ℕ ≃ ℕ := e.symm.toEquiv
+  letI : SuccOrder (ULift ℕ) :=
+    LinearLocallyFiniteOrder.succOrder (ULift ℕ)
+  letI : PredOrder (ULift ℕ) :=
+    LinearLocallyFiniteOrder.predOrder (ULift ℕ)
+  let e : ULift ℕ ≃o ℕ :=
+    LinearLocallyFiniteOrder.orderIsoNatOfLinearSuccPredArch
+  let σ : ℕ ≃ ℕ where
+    toFun n := (e.symm n).down
+    invFun n := e (ULift.up n)
+    left_inv n := by simp
+    right_inv n := by simp
   refine ⟨σ, ?_⟩
   intro n m hnm
   have hlt : e.symm n < e.symm m := e.symm.strictMono hnm
+  change r (e.symm n).down < r (e.symm m).down at hlt
   change r (σ n) < r (σ m)
   exact hlt
 
