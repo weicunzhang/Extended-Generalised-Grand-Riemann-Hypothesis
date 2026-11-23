@@ -13,7 +13,7 @@ This directory contains a Lean 4 project using Mathlib, intended to formalize se
 | Paper statement | Formalization status |
 |---|---|
 | Lemma 1: irreducible polynomial divides a finite product | Initial Lean statement and proof written; awaiting CI compilation |
-| Lemma 2: divisibility for infinite products of entire functions | Not yet formalized |
+| Lemma 2: divisibility for infinite products of entire functions | Root-level and function-level Lean theorem written; CI verification pending |
 | Theorem 1: symmetric entire-function product theorem | Not yet formalized |
 
 ## Lemma 1
@@ -39,3 +39,9 @@ lake build
 ```
 
 A GitHub Actions workflow builds the project and audits theorem axioms. A statement is described as machine-verified only after that workflow succeeds. No `sorry` or project-defined axiom is intended to be used.
+
+## Lemma 2
+
+`RiemannHypothesisLean/Lemma2.lean` formalizes the pointwise argument at a complex root of an irreducible real polynomial. Absolute convergence at that point is expressed as summability of the norms of the deviations of the factors from `1`; the infinite product is represented by Mathlib's `HasProd`.
+
+The function-level theorem assumes an entire quotient witnessing divisibility by `m`, together with the pointwise product representation. It then proves that `m` divides one factor. This formal theorem is stronger than the paper's stated algebraic conclusion: it does not require each factor to be irreducible or to have the same degree as `m`. The global locally uniform convergence hypothesis and the condition `f(0) ≠ 0` are not needed for this root-level implication; the product's pointwise absolute convergence and the existence of the entire quotient are the hypotheses used by the proof.
