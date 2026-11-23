@@ -1,6 +1,10 @@
 module
-
 public import Mathlib
+public import Mathlib.Algebra.Polynomial.Basic
+public import Mathlib.Basic.Complex.Basic
+public import Mathlib.Algebra.Group.Irreducible.Defs
+public import Mathlib.Topology.Algebra.InfiniteSum.Defs
+public import Mathlib.Analysis.Calculus.FDeriv.Defs
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 
 public section
