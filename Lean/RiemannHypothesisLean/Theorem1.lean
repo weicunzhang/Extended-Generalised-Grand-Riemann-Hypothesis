@@ -599,8 +599,9 @@ lemma norm_one_add_pow_sub_one_le (w : ℂ) (m : ℕ) :
   | succ m ih =>
       have hnorm : ‖(1 : ℂ) + w‖ ≤ 1 + ‖w‖ := by
         simpa using norm_add_le (1 : ℂ) w
-      have hpow : 1 ≤ (1 + ‖w‖) ^ (m + 1) := by
-        exact one_le_pow₀ (by positivity)
+      have hbase : 1 ≤ 1 + ‖w‖ := by positivity
+      have hpow : 1 ≤ (1 + ‖w‖) ^ (m + 1) :=
+        one_le_pow₀ hbase
       calc
         ‖(1 + w) ^ (m + 1) - 1‖
             = ‖((1 + w) ^ m - 1) * (1 + w) + w‖ := by
@@ -609,7 +610,7 @@ lemma norm_one_add_pow_sub_one_le (w : ℂ) (m : ℕ) :
         _ ≤ ‖((1 + w) ^ m - 1) * (1 + w)‖ + ‖w‖ :=
               norm_add_le _ _
         _ ≤ ‖(1 + w) ^ m - 1‖ * ‖1 + w‖ + ‖w‖ := by
-              exact add_le_add_right (norm_mul_le _ _) _
+              exact add_le_add (norm_mul_le _ _) le_rfl
         _ ≤ ((m : ℝ) * ‖w‖ * (1 + ‖w‖) ^ m) * (1 + ‖w‖) + ‖w‖ := by
               gcongr
         _ = (m : ℝ) * ‖w‖ * (1 + ‖w‖) ^ (m + 1) + ‖w‖ := by
@@ -617,8 +618,8 @@ lemma norm_one_add_pow_sub_one_le (w : ℂ) (m : ℕ) :
               ring
         _ ≤ (m : ℝ) * ‖w‖ * (1 + ‖w‖) ^ (m + 1) +
               ‖w‖ * (1 + ‖w‖) ^ (m + 1) := by
-              exact add_le_add_left
-                (mul_le_mul_of_nonneg_left hpow (norm_nonneg w)) _
+              exact add_le_add le_rfl
+                (mul_le_mul_of_nonneg_left hpow (norm_nonneg w))
         _ = ((m + 1 : ℕ) : ℝ) * ‖w‖ * (1 + ‖w‖) ^ (m + 1) := by
               push_cast
               ring
@@ -653,7 +654,7 @@ theorem theorem1FactorTerm_deviation_bound
       (R + k) ^ 2 * Real.exp ((R + k) ^ 2 * A) *
         ((mult n : ℝ) / β n ^ 2) := by
   let C : ℝ := R + k
-  let w : ℂ := ((β n ^ 2)⁻¹ : ℂ) * (z - (α n : ℂ)) ^ 2
+  let w : ℂ := (((β n ^ 2)⁻¹ : ℝ) : ℂ) * (z - (α n : ℂ)) ^ 2
   have hC : 0 ≤ C := by
     dsimp [C]
     exact add_nonneg hR hk
@@ -664,7 +665,7 @@ theorem theorem1FactorTerm_deviation_bound
     dsimp [C]
     exact (norm_sub_le _ _).trans (add_le_add hz hαnorm)
   have hdist_sq : ‖z - (α n : ℂ)‖ ^ 2 ≤ C ^ 2 := by
-    nlinarith [sq_nonneg (C - ‖z - (α n : ℂ)‖)]
+    exact (sq_le_sq₀ (norm_nonneg _) hC).2 hdist
   have hw_norm : ‖w‖ = (β n ^ 2)⁻¹ * ‖z - (α n : ℂ)‖ ^ 2 := by
     dsimp [w]
     rw [norm_mul, Complex.norm_of_nonneg (inv_nonneg.mpr (sq_nonneg (β n))),
@@ -736,10 +737,7 @@ theorem theorem1FactorTerm_locally_uniformly_absolutely_summable
   intro K hK
   obtain ⟨R₀, hR₀⟩ := hK.isBounded.subset_closedBall (0 : ℂ)
   let R : ℝ := max R₀ 0
-  have hA_bdd :
-      IsBoundedUnder (· ≤ ·) Filter.atTop
-        (fun n : ℕ => (mult n : ℝ) / β n ^ 2) :=
-    hsum.tendsto_atTop_zero.isBoundedUnder_le
+  have hA_bdd := hsum.tendsto_atTop_zero.isBoundedUnder_le
   obtain ⟨A₀, hA₀⟩ := hA_bdd.bddAbove_range
   let A : ℝ := max A₀ 0
   have hA : ∀ n, (mult n : ℝ) / β n ^ 2 ≤ A := by
