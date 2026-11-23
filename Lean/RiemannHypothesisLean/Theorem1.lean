@@ -237,13 +237,13 @@ theorem theorem1_abs_beta_injective
 /-- A finite cutoff for a sequence tending to +∞: after this index,
 all values exceed the prescribed value r b. -/
 noncomputable def tendstoBound (r : ℕ → ℝ)
-    (hr : Tendsto r atTop atTop) (b : ℕ) : ℕ :=
+    (hr : Filter.Tendsto r atTop atTop) (b : ℕ) : ℕ :=
   Classical.choose
     (Filter.eventually_atTop.mp
-      (hr.eventually (eventually_gt_atTop (r b))))
+      (hr.eventually (Filter.eventually_gt_atTop (r b))))
 
 theorem tendstoBound_spec (r : ℕ → ℝ)
-    (hr : Tendsto r atTop atTop) (b n : ℕ)
+    (hr : Filter.Tendsto r atTop atTop) (b n : ℕ)
     (hn : tendstoBound r hr b ≤ n) : r b < r n :=
   Classical.choose_spec
     (Filter.eventually_atTop.mp
@@ -252,13 +252,13 @@ theorem tendstoBound_spec (r : ℕ → ℝ)
 /-- A finite set containing exactly the indices whose r-values
 lie in the closed interval [r a, r b], when r tends to +∞. -/
 noncomputable def tendstoIccFinset (r : ℕ → ℝ)
-    (hr : Tendsto r atTop atTop) (a b : ℕ) : Finset ℕ := by
+    (hr : Filter.Tendsto r atTop atTop) (a b : ℕ) : Finset ℕ := by
   classical
   exact (Finset.range (tendstoBound r hr b)).filter
     (fun n => r a ≤ r n ∧ r n ≤ r b)
 
 theorem mem_tendstoIccFinset (r : ℕ → ℝ)
-    (hr : Tendsto r atTop atTop) (a b x : ℕ) :
+    (hr : Filter.Tendsto r atTop atTop) (a b x : ℕ) :
     x ∈ tendstoIccFinset r hr a b ↔ r a ≤ r x ∧ r x ≤ r b := by
   classical
   simp only [tendstoIccFinset, Finset.mem_filter, Finset.mem_range]
@@ -278,11 +278,13 @@ theorem theorem1_abs_beta_tendsto_atTop
     (hβ : ∀ n, β n ≠ 0)
     (hmult : ∀ n, 0 < mult n)
     (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
-    Tendsto (fun n => |β n|) atTop atTop := by
+    Filter.Tendsto (fun n => |β n|) atTop atTop := by
   have hsum' : Summable (fun n => (mult n : ℝ) * (β n ^ 2)⁻¹) := by
     simpa only [div_eq_mul_inv] using hsum
   have hrecip : Summable (fun n => (|β n| ^ 2)⁻¹) := by
     apply Summable.of_nonneg_of_le
+      (f := fun n => (mult n : ℝ) * (β n ^ 2)⁻¹)
+      (g := fun n => (|β n| ^ 2)⁻¹)
     · intro n
       exact inv_nonneg.mpr (sq_nonneg (|β n|))
     · intro n
@@ -292,9 +294,9 @@ theorem theorem1_abs_beta_tendsto_atTop
       exact mul_le_mul_of_nonneg_right hmult1
         (inv_nonneg.mpr (sq_nonneg (β n)))
     · exact hsum'
-  have hzero : Tendsto (fun n => (|β n| ^ 2)⁻¹) atTop (𝓝 0) :=
+  have hzero : Filter.Tendsto (fun n => (|β n| ^ 2)⁻¹) atTop (𝓝 0) :=
     hrecip.tendsto_atTop_zero
-  refine tendsto_atTop.2 ?_
+  refine Filter.tendsto_atTop.2 ?_
   intro B
   let C : ℝ := max B 0 + 1
   have hCpos : 0 < C := by
@@ -325,15 +327,15 @@ bounded intervals are finite, it has a least element and no greatest
 element, and hence it is order-isomorphic to the usual natural numbers. -/
 theorem exists_strictMono_reindex_of_tendsto_atTop
     (r : ℕ → ℝ) (hinj : Function.Injective r)
-    (hr : Tendsto r atTop atTop) :
+    (hr : Filter.Tendsto r atTop atTop) :
     ∃ σ : ℕ ≃ ℕ, StrictMono (fun n => r (σ n)) := by
   classical
   letI : LinearOrder ℕ := LinearOrder.lift' r hinj
   letI : LocallyFiniteOrder ℕ :=
     LocallyFiniteOrder.ofIcc' ℕ (tendstoIccFinset r hr) (by
       intro a b x
-      change x ∈ tendstoIccFinset r hr a b ↔ r a ≤ r x ∧ r x ≤ r b
-      exact mem_tendstoIccFinset r hr a b x)
+      simpa only [LinearOrder.lift'] using
+        (mem_tendstoIccFinset r hr a b x))
   let N0 : ℕ := tendstoBound r hr 0
   have hN0 : 0 < N0 := by
     by_contra hN0
