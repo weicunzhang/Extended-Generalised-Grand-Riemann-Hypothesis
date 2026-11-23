@@ -852,9 +852,9 @@ theorem theorem1_infinite_product_is_entire
       DifferentiableOn ℂ
         (fun z => ∏ n ∈ s, theorem1FactorTerm α β mult n z) Set.univ := by
     filter_upwards with s
-    apply DifferentiableOn.finsetProd
-    intro n hn
-    exact (hdiffFactor n).differentiableOn
+    simpa [Finset.prod_fn] using
+      (DifferentiableOn.finsetProd fun n hn =>
+        (hdiffFactor n).differentiableOn)
   have hdiff := hloc.differentiableOn hfinite isOpen_univ
   exact differentiableOn_univ.mp hdiff
 
