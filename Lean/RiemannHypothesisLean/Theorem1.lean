@@ -3,6 +3,7 @@ module
 public import Mathlib
 public import Mathlib.Algebra.Polynomial.SpecificDegree
 public import Mathlib.Order.SuccPred.LinearLocallyFinite
+public import Mathlib.Topology.Filter
 public import RiemannHypothesisLean.Lemma2
 
 public section
@@ -312,7 +313,7 @@ theorem theorem1_abs_beta_tendsto_atTop
   have hBC : B < C := by
     dsimp [C]
     linarith [le_max_left B 0]
-  have hsmall : ∀ᶠ n : ℕ in atTop, (|β n| ^ 2)⁻¹ < (C ^ 2)⁻¹ := by
+  have hsmall : ∀ᶠ n : ℕ in Filter.atTop, (|β n| ^ 2)⁻¹ < (C ^ 2)⁻¹ := by
     have hnhds : Set.Iio ((C ^ 2)⁻¹) ∈ 𝓝 (0 : ℝ) :=
       Iio_mem_nhds (by positivity)
     exact hzero.eventually hnhds
@@ -403,7 +404,7 @@ theorem exists_strictMono_reindex_of_tendsto_atTop
       · by_cases hle : r n.down ≤ r 0
         · have hnS : n ∈ S := by
             simp [S, hn, hle]
-          exact Finset.min'_le S hS n hnS
+          exact Finset.min'_le S n hnS
         · exact le_of_lt (hbr0.trans_lt (lt_of_not_ge hle))
       · have h0n : r 0 < r n.down :=
           tendstoBound_spec r hr 0 n.down (Nat.le_of_not_gt hn)
@@ -421,7 +422,7 @@ theorem exists_strictMono_reindex_of_tendsto_atTop
   letI : PredOrder (ULift ℕ) :=
     LinearLocallyFiniteOrder.predOrder (ULift ℕ)
   let e : ULift ℕ ≃o ℕ :=
-    LinearLocallyFiniteOrder.orderIsoNatOfLinearSuccPredArch
+    orderIsoNatOfLinearSuccPredArch
   let σ : ℕ ≃ ℕ where
     toFun n := (e.symm n).down
     invFun n := e (ULift.up n)
