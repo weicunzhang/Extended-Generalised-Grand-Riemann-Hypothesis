@@ -14,7 +14,7 @@ This directory contains a Lean 4 project using Mathlib, intended to formalize se
 |---|---|
 | Lemma 1: irreducible polynomial divides a finite product | Formalized and merged in PR #2; CI passed |
 | Lemma 2: divisibility for infinite products of entire functions | Formalized in PR #3 and corrected in PR #4; final CI passed |
-| Theorem 1: symmetric entire-function product theorem | Center-line conclusion, distinct heights, and strictly increasing bijective reindexing formalized in PRs #5–#6; final CI passed. PR #7 adds the local absolute-convergence bridge |
+| Theorem 1: symmetric entire-function product theorem | Center-line conclusion, distinct heights, and strictly increasing bijective reindexing formalized in PRs #5–#6; PR #7 derives pointwise consequences from local absolute convergence; PR #8 derives the compact-wise majorant from the weighted height-summability condition (CI passed); PR #9 formalizes locally uniform convergence of the product and its entirety (CI pending) |
 
 ## Lemma 1
 
@@ -60,3 +60,25 @@ The formalization is layered:
 The lower-level theorem uses pointwise `HasProd` and summability of the deviations from `1`. PR #7 adds a formal bridge from local uniform absolute convergence to these pointwise conditions. Local uniform absolute convergence is expressed by a compact-wise summable majorant: on each compact set, one summable sequence bounds all factor deviations uniformly. Taking a singleton gives pointwise summability; Mathlib's summable-product theorem then gives `HasProd`. The pointwise representation identifies the resulting product with `F(z)`.
 
 This is specifically an absolute-convergence condition on the factor deviations, not merely convergence of the partial products uniformly on compact sets. The entire-function packaging is stronger than what the pointwise root argument itself needs.
+
+PR #8 addresses the next analytic step. Assume the paper's center bounds \(0 \leq \alpha_i \leq k\) and the weighted summability condition
+\[
+\sum_i \frac{m_i}{\beta_i^2} < \infty.
+\]
+For a compact set \(K \subset \mathbb C\), choose \(R\) such that \(K \subset \overline B(0,R)\). The sequence \(a_i=m_i/\beta_i^2\) is bounded because it is summable; write \(a_i \leq A\). Uniformly for \(z\in K\),
+\[
+w_i(z)=\frac{(z-\alpha_i)^2}{\beta_i^2},
+\qquad
+|w_i(z)| \leq \frac{(R+k)^2}{\beta_i^2}.
+\]
+The binomial estimate and \((1+x)^{m}\leq e^{mx}\) for \(x\geq0\) give
+\[
+\left|(1+w_i(z))^{m_i}-1\right|
+\leq
+(R+k)^2 e^{(R+k)^2 A}\frac{m_i}{\beta_i^2}.
+\]
+The right-hand side is a summable sequence independent of \(z\in K\). Thus the weighted height-summability condition supplies the compact-wise summable majorant required by PR #7. PR #8 formalizes this estimate and adds a wrapper deriving the full Theorem 1 conclusion from the parameter bounds, symmetry, zero-quadruple uniqueness, and product representation. Its Lean build and axiom audit passed in GitHub Actions Run #51.
+
+PR #9 formalizes the next analytic step. The compact-wise majorant, together with continuity of each factor, gives uniform convergence of the product on every compact set via Mathlib's `hasProdUniformlyOn_nat_one_add` theorem. The compact-wise results are assembled into local uniform convergence on \(\mathbb C\). The finite partial products are differentiable because they are finite products of polynomial functions. By the Weierstrass theorem for locally uniform limits of holomorphic functions, the pointwise infinite product is differentiable on all of \(\mathbb C\), hence entire. A final wrapper transfers this conclusion to any function identified pointwise with that product. The Lean build and axiom audit for this step passed in GitHub Actions Run #54.
+
+The combined theorem `theorem1_entire_and_full_conclusion_of_parameter_conditions` assembles the parameter-derived compact-wise majorant, the entire-function conclusion, and the zero-center/increasing-height conclusion into one result. Its Lean build and axiom audit passed in GitHub Actions Run #55; the final README-only commit was also checked successfully in Run #56. PR #9 remains a separate, stacked draft pull request based on PR #8; it has not been merged.

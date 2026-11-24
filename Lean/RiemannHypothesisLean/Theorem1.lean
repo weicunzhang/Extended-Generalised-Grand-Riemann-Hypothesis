@@ -587,4 +587,325 @@ theorem theorem1_full_conclusion_of_local_absolute_convergence
     (by simpa [theorem1FactorTerm] using habsolute)
     hsum
 
+
+/-- A binomial factor is controlled by its first-order deviation:
+the difference between (1+w)^m and 1 is at most
+m * ‖w‖ * (1 + ‖w‖)^m. -/
+lemma norm_one_add_pow_sub_one_le (w : ℂ) (m : ℕ) :
+    ‖(1 + w) ^ m - 1‖ ≤ (m : ℝ) * ‖w‖ * (1 + ‖w‖) ^ m := by
+  induction m with
+  | zero =>
+      simp
+  | succ m ih =>
+      have hnorm : ‖(1 : ℂ) + w‖ ≤ 1 + ‖w‖ := by
+        simpa using norm_add_le (1 : ℂ) w
+      have hbase : 1 ≤ 1 + ‖w‖ := le_add_of_nonneg_right (norm_nonneg w)
+      have hpow : 1 ≤ (1 + ‖w‖) ^ (m + 1) :=
+        one_le_pow₀ hbase
+      calc
+        ‖(1 + w) ^ (m + 1) - 1‖
+            = ‖((1 + w) ^ m - 1) * (1 + w) + w‖ := by
+                congr 1
+                ring
+        _ ≤ ‖((1 + w) ^ m - 1) * (1 + w)‖ + ‖w‖ :=
+              norm_add_le _ _
+        _ ≤ ‖(1 + w) ^ m - 1‖ * ‖1 + w‖ + ‖w‖ := by
+              exact add_le_add (norm_mul_le _ _) le_rfl
+        _ ≤ ((m : ℝ) * ‖w‖ * (1 + ‖w‖) ^ m) * (1 + ‖w‖) + ‖w‖ := by
+              gcongr
+        _ = (m : ℝ) * ‖w‖ * (1 + ‖w‖) ^ (m + 1) + ‖w‖ := by
+              rw [pow_succ]
+              ring
+        _ ≤ (m : ℝ) * ‖w‖ * (1 + ‖w‖) ^ (m + 1) +
+              ‖w‖ * (1 + ‖w‖) ^ (m + 1) := by
+              simpa using (mul_le_mul_of_nonneg_left hpow (norm_nonneg w))
+        _ = ((m + 1 : ℕ) : ℝ) * ‖w‖ * (1 + ‖w‖) ^ (m + 1) := by
+              push_cast
+              ring
+
+/-- The elementary exponential bound for the binomial majorant. -/
+lemma one_add_norm_pow_le_exp (m : ℕ) (x : ℝ) (hx : 0 ≤ x) :
+    (1 + x) ^ m ≤ Real.exp ((m : ℝ) * x) := by
+  have hbase : 1 + x ≤ Real.exp x := by
+    have h := Real.add_one_le_exp x
+    linarith
+  calc
+    (1 + x) ^ m ≤ (Real.exp x) ^ m := by
+      gcongr
+    _ = Real.exp ((m : ℝ) * x) := by
+      rw [← Real.exp_nat_mul]
+
+/-- For every point in a ball containing the centers, the deviation of a
+normalized quadratic factor with multiplicity mult n is bounded by a fixed
+constant times mult n / beta n squared. -/
+theorem theorem1FactorTerm_deviation_bound
+    (k R A : ℝ)
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (hk : 0 ≤ k)
+    (hR : 0 ≤ R)
+    (hα : ∀ n, 0 ≤ α n ∧ α n ≤ k)
+    (hA : ∀ n, (mult n : ℝ) / β n ^ 2 ≤ A)
+    {z : ℂ}
+    (hz : ‖z‖ ≤ R)
+    (n : ℕ) :
+    ‖theorem1FactorTerm α β mult n z - 1‖ ≤
+      (R + k) ^ 2 * Real.exp ((R + k) ^ 2 * A) *
+        ((mult n : ℝ) / β n ^ 2) := by
+  let C : ℝ := R + k
+  let w : ℂ := (((β n ^ 2)⁻¹ : ℝ) : ℂ) * (z - (α n : ℂ)) ^ 2
+  have hC : 0 ≤ C := by
+    dsimp [C]
+    exact add_nonneg hR hk
+  have hαnorm : ‖(α n : ℂ)‖ ≤ k := by
+    rw [Complex.norm_real, Real.norm_of_nonneg (hα n).1]
+    exact (hα n).2
+  have hdist : ‖z - (α n : ℂ)‖ ≤ C := by
+    dsimp [C]
+    exact (norm_sub_le _ _).trans (add_le_add hz hαnorm)
+  have hdist_sq : ‖z - (α n : ℂ)‖ ^ 2 ≤ C ^ 2 := by
+    exact (sq_le_sq₀ (norm_nonneg _) hC).2 hdist
+  have hw_norm : ‖w‖ = (β n ^ 2)⁻¹ * ‖z - (α n : ℂ)‖ ^ 2 := by
+    dsimp [w]
+    rw [norm_mul, Complex.norm_of_nonneg (inv_nonneg.mpr (sq_nonneg (β n))),
+      norm_pow]
+  have hw_bound : ‖w‖ ≤ C ^ 2 / β n ^ 2 := by
+    calc
+      ‖w‖ = (β n ^ 2)⁻¹ * ‖z - (α n : ℂ)‖ ^ 2 := hw_norm
+      _ ≤ (β n ^ 2)⁻¹ * C ^ 2 :=
+        mul_le_mul_of_nonneg_left hdist_sq (inv_nonneg.mpr (sq_nonneg (β n)))
+      _ = C ^ 2 / β n ^ 2 := by
+        rw [div_eq_mul_inv]
+        ring
+  have hm_nonneg : 0 ≤ (mult n : ℝ) := Nat.cast_nonneg _
+  have hmw : (mult n : ℝ) * ‖w‖ ≤ C ^ 2 * ((mult n : ℝ) / β n ^ 2) := by
+    calc
+      (mult n : ℝ) * ‖w‖ ≤ (mult n : ℝ) * (C ^ 2 / β n ^ 2) :=
+        mul_le_mul_of_nonneg_left hw_bound hm_nonneg
+      _ = C ^ 2 * ((mult n : ℝ) / β n ^ 2) := by ring
+  have hmwA : (mult n : ℝ) * ‖w‖ ≤ C ^ 2 * A :=
+    hmw.trans (mul_le_mul_of_nonneg_left (hA n) (sq_nonneg C))
+  have ha_nonneg : 0 ≤ (mult n : ℝ) / β n ^ 2 :=
+    div_nonneg hm_nonneg (sq_nonneg (β n))
+  have hfactor :
+      (quadraticFactor (α n) (β n)).aeval z = 1 + w := by
+    simp [w, quadraticFactor]
+  have hdeviation :
+      ‖(1 + w) ^ mult n - 1‖ ≤
+        (mult n : ℝ) * ‖w‖ * Real.exp ((mult n : ℝ) * ‖w‖) := by
+    calc
+      ‖(1 + w) ^ mult n - 1‖ ≤
+          (mult n : ℝ) * ‖w‖ * (1 + ‖w‖) ^ mult n :=
+        norm_one_add_pow_sub_one_le w (mult n)
+      _ ≤ (mult n : ℝ) * ‖w‖ *
+          Real.exp ((mult n : ℝ) * ‖w‖) := by
+        exact mul_le_mul_of_nonneg_left
+          (one_add_norm_pow_le_exp (mult n) ‖w‖ (norm_nonneg _))
+          (mul_nonneg hm_nonneg (norm_nonneg _))
+  have hmain :
+      ‖(1 + w) ^ mult n - 1‖ ≤
+        C ^ 2 * ((mult n : ℝ) / β n ^ 2) * Real.exp (C ^ 2 * A) := by
+    calc
+      ‖(1 + w) ^ mult n - 1‖ ≤
+          (mult n : ℝ) * ‖w‖ * Real.exp ((mult n : ℝ) * ‖w‖) :=
+        hdeviation
+      _ ≤ C ^ 2 * ((mult n : ℝ) / β n ^ 2) *
+          Real.exp ((mult n : ℝ) * ‖w‖) := by
+        exact mul_le_mul_of_nonneg_right hmw (Real.exp_nonneg _)
+      _ ≤ C ^ 2 * ((mult n : ℝ) / β n ^ 2) *
+          Real.exp (C ^ 2 * A) := by
+        exact mul_le_mul_of_nonneg_left
+          (Real.exp_le_exp.mpr hmwA)
+          (mul_nonneg (sq_nonneg C) ha_nonneg)
+  change ‖((quadraticFactor (α n) (β n)).aeval z) ^ mult n - 1‖ ≤ _
+  rw [hfactor]
+  simpa [C, mul_comm, mul_left_comm, mul_assoc] using hmain
+
+/-- The weighted reciprocal-square summability condition, together with
+the bounded-center hypothesis 0 ≤ alpha n ≤ k, supplies a compact-wise
+summable majorant for the deviations of the quadratic factors. -/
+theorem theorem1FactorTerm_locally_uniformly_absolutely_summable
+    (k : ℝ)
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (hk : 0 ≤ k)
+    (hα : ∀ n, 0 ≤ α n ∧ α n ≤ k)
+    (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
+    LocallyUniformlyAbsolutelySummable
+      (fun n z => theorem1FactorTerm α β mult n z) := by
+  intro K hK
+  obtain ⟨R₀, hR₀⟩ := hK.isBounded.subset_closedBall (0 : ℂ)
+  let R : ℝ := max R₀ 0
+  have hA_bdd := hsum.tendsto_atTop_zero.isBoundedUnder_le
+  obtain ⟨A₀, hA₀⟩ := hA_bdd.bddAbove_range
+  let A : ℝ := max A₀ 0
+  have hA : ∀ n, (mult n : ℝ) / β n ^ 2 ≤ A := by
+    intro n
+    exact (hA₀ (Set.mem_range_self n)).trans (le_max_left _ _)
+  have hR_nonneg : 0 ≤ R := le_max_right _ _
+  have hsum_bound :
+      Summable (fun n => (R + k) ^ 2 * Real.exp ((R + k) ^ 2 * A) *
+        ((mult n : ℝ) / β n ^ 2)) :=
+    hsum.mul_left ((R + k) ^ 2 * Real.exp ((R + k) ^ 2 * A))
+  refine ⟨fun n => (R + k) ^ 2 * Real.exp ((R + k) ^ 2 * A) *
+      ((mult n : ℝ) / β n ^ 2), hsum_bound, ?_⟩
+  intro n z hz
+  have hzR₀ : ‖z‖ ≤ R₀ := by
+    have hzball : z ∈ Metric.closedBall (0 : ℂ) R₀ := hR₀ hz
+    simpa [Metric.mem_closedBall, dist_eq_norm] using hzball
+  have hzR : ‖z‖ ≤ R := hzR₀.trans (le_max_left _ _)
+  exact theorem1FactorTerm_deviation_bound k R A α β mult hk hR_nonneg
+    hα hA hzR n
+
+/-- The full Theorem 1 conclusion now follows from the paper's parameter
+conditions: bounded centers, nonzero heights, and summability of
+m n / beta n squared. The compact-wise absolute-convergence majorant is
+derived rather than assumed. -/
+theorem theorem1_full_conclusion_of_parameter_conditions
+    (k : ℝ)
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (F : ℂ → ℂ)
+    (hk : 0 < k)
+    (hα : ∀ n, 0 ≤ α n ∧ α n ≤ k)
+    (hβ : ∀ n, β n ≠ 0)
+    (hmult : ∀ n, 0 < mult n)
+    (hunique : ∀ i l, α i + α l = k → β i ^ 2 = β l ^ 2 → i = l)
+    (hsym : ∀ z : ℂ, F z = F ((k : ℂ) - z))
+    (hrepresentation : ∀ z : ℂ,
+      F z = ∏' n : ℕ, theorem1FactorTerm α β mult n z)
+    (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
+    (∀ i, α i = k / 2) ∧
+      ∃ σ : ℕ ≃ ℕ, 0 < |β (σ 0)| ∧ StrictMono (fun n => |β (σ n)|) := by
+  have hlocal :=
+    theorem1FactorTerm_locally_uniformly_absolutely_summable
+      k α β mult (le_of_lt hk) hα hsum
+  exact theorem1_full_conclusion_of_local_absolute_convergence
+    k α β mult F hβ hmult hunique hsym hrepresentation hlocal hsum
+
+
+/-- A compact-wise summable majorant for the deviations from one, together
+with continuity of each factor, implies locally uniform convergence of the
+infinite product to its pointwise infinite-product value. -/
+theorem LocallyUniformlyAbsolutelySummable.hasProdLocallyUniformly
+    {f : ℕ → ℂ → ℂ}
+    (h : LocallyUniformlyAbsolutelySummable f)
+    (hcts : ∀ n, Continuous (f n)) :
+    HasProdLocallyUniformly f (fun z => ∏' n, f n z) := by
+  apply hasProdLocallyUniformly_of_forall_compact
+  intro K hK
+  obtain ⟨bound, hbound, hdom⟩ := h K hK
+  let deviation : ℕ → ℂ → ℂ := fun n z => f n z - 1
+  have hcts' : ∀ n, ContinuousOn (deviation n) K := by
+    intro n
+    dsimp [deviation]
+    exact (hcts n).continuousOn.sub continuousOn_const
+  have hprod :=
+    Summable.hasProdUniformlyOn_nat_one_add hK hbound
+      (Filter.Eventually.of_forall fun n z hz => hdom n z hz)
+      hcts'
+  have hfactor : ∀ n z, 1 + deviation n z = f n z := by
+    intro n z
+    dsimp [deviation]
+    ring
+  have hprodFactors :
+      HasProdUniformlyOn f (fun z => ∏' n, (1 + deviation n z)) K := by
+    apply hprod.congr
+    exact Filter.Eventually.of_forall fun s z hz => by
+      apply Finset.prod_congr rfl
+      intro n hn
+      exact hfactor n z
+  have htprod : ∀ z, (∏' n, (1 + deviation n z)) = ∏' n, f n z := by
+    intro z
+    apply tprod_congr
+    intro n
+    exact hfactor n z
+  exact hprodFactors.congr_right (fun z hz => htprod z)
+
+/-- The locally uniformly convergent infinite product in Theorem 1 is an
+entire function. Each finite partial product is a polynomial in z, and
+the locally uniform limit theorem for holomorphic functions applies. -/
+theorem theorem1_infinite_product_is_entire
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (hlocal : LocallyUniformlyAbsolutelySummable
+      (fun n z => theorem1FactorTerm α β mult n z)) :
+    Differentiable ℂ (fun z => ∏' n, theorem1FactorTerm α β mult n z) := by
+  have hdiffFactor : ∀ n, Differentiable ℂ
+      (fun z => theorem1FactorTerm α β mult n z) := by
+    intro n
+    dsimp [theorem1FactorTerm]
+    exact (quadraticFactor (α n) (β n)).differentiable_aeval.pow (mult n)
+  have hcts : ∀ n, Continuous (fun z => theorem1FactorTerm α β mult n z) :=
+    fun n => (hdiffFactor n).continuous
+  have hprod :=
+    hlocal.hasProdLocallyUniformly
+      (f := fun n z => theorem1FactorTerm α β mult n z) hcts
+  have hloc :
+      TendstoLocallyUniformlyOn
+        (fun s z => ∏ n ∈ s, theorem1FactorTerm α β mult n z)
+        (fun z => ∏' n, theorem1FactorTerm α β mult n z)
+        Filter.atTop Set.univ := by
+    simpa [HasProdLocallyUniformlyOn] using
+      hprod.hasProdLocallyUniformlyOn (s := Set.univ)
+  have hfinite : ∀ᶠ s : Finset ℕ in Filter.atTop,
+      DifferentiableOn ℂ
+        (fun z => ∏ n ∈ s, theorem1FactorTerm α β mult n z) Set.univ := by
+    filter_upwards with s
+    simpa [Finset.prod_fn] using
+      (DifferentiableOn.finsetProd fun n hn =>
+        (hdiffFactor n).differentiableOn)
+  have hdiff := hloc.differentiableOn hfinite isOpen_univ
+  exact differentiableOn_univ.mp hdiff
+
+/-- If F is represented by the locally uniformly convergent product in
+Theorem 1, then F is entire; this derives rather than assumes its
+holomorphy from the factor representation and the compact-wise majorant. -/
+theorem theorem1_representation_is_entire
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (F : ℂ → ℂ)
+    (hrepresentation : ∀ z : ℂ,
+      F z = ∏' n : ℕ, theorem1FactorTerm α β mult n z)
+    (hlocal : LocallyUniformlyAbsolutelySummable
+      (fun n z => theorem1FactorTerm α β mult n z)) :
+    Differentiable ℂ F := by
+  have hprod := theorem1_infinite_product_is_entire α β mult hlocal
+  have hEq : F = fun z => ∏' n, theorem1FactorTerm α β mult n z :=
+    funext hrepresentation
+  rw [hEq]
+  exact hprod
+
+
+/-- The original parameter hypotheses in Theorem 1 imply both that the
+represented infinite product is entire and that the zero-center and
+increasing-height conclusions hold. In particular, entire-ness is derived
+from the compact-wise majorant rather than assumed separately. -/
+theorem theorem1_entire_and_full_conclusion_of_parameter_conditions
+    (k : ℝ)
+    (α β : ℕ → ℝ)
+    (mult : ℕ → ℕ)
+    (F : ℂ → ℂ)
+    (hk : 0 < k)
+    (hα : ∀ n, 0 ≤ α n ∧ α n ≤ k)
+    (hβ : ∀ n, β n ≠ 0)
+    (hmult : ∀ n, 0 < mult n)
+    (hunique : ∀ i l, α i + α l = k → β i ^ 2 = β l ^ 2 → i = l)
+    (hsym : ∀ z : ℂ, F z = F ((k : ℂ) - z))
+    (hrepresentation : ∀ z : ℂ,
+      F z = ∏' n : ℕ, theorem1FactorTerm α β mult n z)
+    (hsum : Summable (fun n => (mult n : ℝ) / β n ^ 2)) :
+    Differentiable ℂ F ∧
+      (∀ i, α i = k / 2) ∧
+        ∃ σ : ℕ ≃ ℕ, 0 < |β (σ 0)| ∧ StrictMono (fun n => |β (σ n)|) := by
+  have hlocal :=
+    theorem1FactorTerm_locally_uniformly_absolutely_summable
+      k α β mult (le_of_lt hk) hα hsum
+  have hEntire :=
+    theorem1_representation_is_entire α β mult F hrepresentation hlocal
+  have hConclusion :=
+    theorem1_full_conclusion_of_local_absolute_convergence
+      k α β mult F hβ hmult hunique hsym hrepresentation hlocal hsum
+  exact ⟨hEntire, hConclusion⟩
+
 end RiemannHypothesisLean
